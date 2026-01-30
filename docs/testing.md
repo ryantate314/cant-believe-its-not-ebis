@@ -31,6 +31,7 @@ The testing strategy follows a **testing pyramid** approach:
 | `make ui-test` | Frontend unit/integration tests |
 | `make ui-test-cov` | Frontend tests with coverage |
 | `make ui-test-e2e` | Playwright E2E tests |
+| `make ui-test-e2e-critical` | Critical path E2E tests (full stack) |
 
 ---
 
@@ -325,6 +326,50 @@ export default defineConfig({
 
 ---
 
+### Critical Path E2E Tests
+
+**Location:** `__tests__/e2e/critical-path.spec.ts`
+
+**Purpose:** Test the full stack (UI -> Next.js API -> FastAPI -> PostgreSQL) to catch integration issues that mocked tests miss, such as database enum mismatches.
+
+**Prerequisites:**
+- PostgreSQL running with migrations applied (`make db-migrate`)
+- Tests will auto-start both FastAPI and Next.js servers
+
+**What They Test:**
+- Work order CRUD operations against real PostgreSQL
+- Database enum value validation (work_order_type, status, priority)
+- Full request/response cycle through all layers
+- Schema contract between application code and database
+
+**Why These Tests Exist:**
+
+Standard backend integration tests use SQLite in-memory, which doesn't validate PostgreSQL-specific features like custom enum types. This can allow bugs to slip through, such as:
+
+```
+sqlalchemy.exc.DBAPIError: invalid input value for enum work_order_type: "WORK_ORDER"
+```
+
+Where the Python enum name (`WORK_ORDER`) is sent instead of the value (`work_order`).
+
+**Running Critical Path Tests:**
+
+```bash
+# Ensure database is ready
+make db-migrate
+
+# Run critical path tests (starts both servers automatically)
+make ui-test-e2e-critical
+```
+
+**When to Run:**
+- Before merging changes that touch database models or schemas
+- When modifying enum definitions
+- As part of pre-release validation
+- After database migration changes
+
+---
+
 ## Backend Testing
 
 ### Tech Stack
@@ -439,10 +484,12 @@ class TestGenerateWorkOrderNumber:
 
 **Test Database Strategy:**
 
-We use an **in-memory SQLite database** for tests:
+We use an **in-memory SQLite database** for unit/integration tests:
 - Fast (no disk I/O)
 - Isolated (each test gets fresh database)
 - No cleanup required
+
+**Important Limitation:** SQLite doesn't support PostgreSQL-specific features like custom enum types. Tests that pass with SQLite may fail against PostgreSQL. For full database validation, run the critical path E2E tests (`make ui-test-e2e-critical`).
 
 ```python
 # tests/conftest.py

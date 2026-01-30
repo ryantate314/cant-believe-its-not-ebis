@@ -44,11 +44,21 @@ class WorkOrder(Base):
     sequence_number: Mapped[int] = mapped_column(Integer)
     city_id: Mapped[int] = mapped_column(ForeignKey("city.id"))
     work_order_type: Mapped[WorkOrderType] = mapped_column(
-        Enum(WorkOrderType, name="work_order_type", create_type=False),
+        Enum(
+            WorkOrderType,
+            name="work_order_type",
+            create_type=False,
+            values_callable=lambda e: [x.value for x in e],
+        ),
         default=WorkOrderType.WORK_ORDER,
     )
     status: Mapped[WorkOrderStatus] = mapped_column(
-        Enum(WorkOrderStatus, name="work_order_status", create_type=False),
+        Enum(
+            WorkOrderStatus,
+            name="work_order_status",
+            create_type=False,
+            values_callable=lambda e: [x.value for x in e],
+        ),
         default=WorkOrderStatus.CREATED,
     )
     status_notes: Mapped[str | None] = mapped_column(String(255))
@@ -73,7 +83,12 @@ class WorkOrder(Base):
     lead_technician: Mapped[str | None] = mapped_column(String(100))
     sales_person: Mapped[str | None] = mapped_column(String(100))
     priority: Mapped[PriorityLevel] = mapped_column(
-        Enum(PriorityLevel, name="priority_level", create_type=False),
+        Enum(
+            PriorityLevel,
+            name="priority_level",
+            create_type=False,
+            values_callable=lambda e: [x.value for x in e],
+        ),
         default=PriorityLevel.NORMAL,
     )
 

@@ -1,4 +1,4 @@
-.PHONY: ui-run api-run api-test api-test-cov ui-test ui-test-cov ui-test-e2e test
+.PHONY: ui-run api-run api-test api-test-cov ui-test ui-test-cov ui-test-e2e ui-test-e2e-critical test
 
 # Flyway version
 FLYWAY_VERSION ?= 11
@@ -58,5 +58,9 @@ ui-test-cov:
 
 ui-test-e2e:
 	cd app/ui && yarn test:e2e
+
+ui-test-e2e-critical:
+	@echo "Running critical path E2E tests (requires PostgreSQL with migrations applied)"
+	cd app/ui && yarn test:e2e:critical
 
 test: api-test ui-test

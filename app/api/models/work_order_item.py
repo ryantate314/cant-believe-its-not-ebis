@@ -28,7 +28,12 @@ class WorkOrderItem(Base):
     work_order_id: Mapped[int] = mapped_column(ForeignKey("work_order.id", ondelete="CASCADE"))
     item_number: Mapped[int] = mapped_column(Integer)
     status: Mapped[WorkOrderItemStatus] = mapped_column(
-        Enum(WorkOrderItemStatus, name="work_order_item_status", create_type=False),
+        Enum(
+            WorkOrderItemStatus,
+            name="work_order_item_status",
+            create_type=False,
+            values_callable=lambda e: [x.value for x in e],
+        ),
         default=WorkOrderItemStatus.OPEN,
     )
     discrepancy: Mapped[str | None] = mapped_column(String(4000))
