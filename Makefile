@@ -1,4 +1,4 @@
-.PHONY: ui-run api-run
+.PHONY: ui-run api-run api-test api-test-cov ui-test ui-test-cov ui-test-e2e test
 
 # Flyway version
 FLYWAY_VERSION ?= 11
@@ -42,3 +42,21 @@ ui-run:
 
 terraform-apply:
 	terraform -chdir=infrastructure apply --var-file=config/dev.tfvars
+
+# Testing
+api-test:
+	cd app/api && uv run --extra test pytest
+
+api-test-cov:
+	cd app/api && uv run --extra test pytest --cov --cov-report=term-missing --cov-fail-under=80
+
+ui-test:
+	cd app/ui && yarn test
+
+ui-test-cov:
+	cd app/ui && yarn test:coverage
+
+ui-test-e2e:
+	cd app/ui && yarn test:e2e
+
+test: api-test ui-test
