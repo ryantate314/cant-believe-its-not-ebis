@@ -1,0 +1,135 @@
+import type {
+  City,
+  CityListResponse,
+  WorkOrder,
+  WorkOrderListResponse,
+  WorkOrderCreateInput,
+  WorkOrderUpdateInput,
+} from "@/types/work-order";
+import type {
+  WorkOrderItem,
+  WorkOrderItemListResponse,
+  WorkOrderItemCreateInput,
+  WorkOrderItemUpdateInput,
+} from "@/types/work-order-item";
+
+const API_BASE = "/api";
+
+class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function fetchApi<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new ApiError(
+      response.status,
+      errorData.detail || `API error: ${response.status}`
+    );
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json();
+}
+
+// Cities API
+export const citiesApi = {
+  list: (activeOnly = true): Promise<CityListResponse> =>
+    fetchApi(`/cities?active_only=${activeOnly}`),
+
+  get: (id: string): Promise<City> => fetchApi(`/cities/${id}`),
+};
+
+// Work Orders API
+export const workOrdersApi = {
+  list: (params: {
+    city_id: string;
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+  }): Promise<WorkOrderListResponse> => {
+    const searchParams = new URLSearchParams({
+      city_id: params.city_id,
+      page: String(params.page ?? 1),
+      page_size: String(params.page_size ?? 20),
+    });
+    if (params.search) searchParams.set("search", params.search);
+    if (params.status) searchParams.set("status", params.status);
+    return fetchApi(`/work-orders?${searchParams}`);
+  },
+
+  get: (id: string): Promise<WorkOrder> => fetchApi(`/work-orders/${id}`),
+
+  create: (data: WorkOrderCreateInput): Promise<WorkOrder> =>
+    fetchApi("/work-orders", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: WorkOrderUpdateInput): Promise<WorkOrder> =>
+    fetchApi(`/work-orders/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string): Promise<void> =>
+    fetchApi(`/work-orders/${id}`, {
+      method: "DELETE",
+    }),
+};
+
+// Work Order Items API
+export const workOrderItemsApi = {
+  list: (workOrderId: string): Promise<WorkOrderItemListResponse> =>
+    fetchApi(`/work-orders/${workOrderId}/items`),
+
+  get: (workOrderId: string, itemId: string): Promise<WorkOrderItem> =>
+    fetchApi(`/work-orders/${workOrderId}/items/${itemId}`),
+
+  create: (
+    workOrderId: string,
+    data: WorkOrderItemCreateInput
+  ): Promise<WorkOrderItem> =>
+    fetchApi(`/work-orders/${workOrderId}/items`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (
+    workOrderId: string,
+    itemId: string,
+    data: WorkOrderItemUpdateInput
+  ): Promise<WorkOrderItem> =>
+    fetchApi(`/work-orders/${workOrderId}/items/${itemId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (workOrderId: string, itemId: string): Promise<void> =>
+    fetchApi(`/work-orders/${workOrderId}/items/${itemId}`, {
+      method: "DELETE",
+    }),
+};
+
+export { ApiError };
