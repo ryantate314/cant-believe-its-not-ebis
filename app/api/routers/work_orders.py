@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
+from typing import Literal
 
 from core.database import get_db
+from core.sorting import SortOrder
 from schemas.work_order import (
     WorkOrderCreate,
     WorkOrderUpdate,
@@ -63,11 +65,22 @@ async def list_work_orders(
     page_size: int = Query(20, ge=1, le=100),
     search: str | None = None,
     status: str | None = None,
+    sort_by: Literal[
+        "work_order_number", "customer_name", "status", "priority", "created_at"
+    ] | None = Query(None, description="Column to sort by"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
 ):
     """List work orders for a city."""
     work_orders, total = await get_work_orders(
-        db, city_uuid=city_id, page=page, page_size=page_size, search=search, status=status
+        db,
+        city_uuid=city_id,
+        page=page,
+        page_size=page_size,
+        search=search,
+        status=status,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
     return WorkOrderListResponse(
         items=[work_order_to_response(wo) for wo in work_orders],

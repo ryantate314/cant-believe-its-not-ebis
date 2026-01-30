@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { workOrderItemsApi } from "@/lib/api";
-import type { WorkOrderItem, WorkOrderItemStatus } from "@/types";
+import type { WorkOrderItem, WorkOrderItemStatus, SortState, SortOrder } from "@/types";
 
 const STATUS_COLORS: Record<WorkOrderItemStatus, string> = {
   open: "bg-green-100 text-green-800",
@@ -59,6 +60,10 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<WorkOrderItem | null>(null);
+  const [sortState, setSortState] = useState<SortState>({
+    sortBy: "item_number",
+    sortOrder: "asc",
+  });
   const [formData, setFormData] = useState({
     discrepancy: "",
     corrective_action: "",
@@ -70,19 +75,31 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
     status: "open" as WorkOrderItemStatus,
   });
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
+    console.log("Fetching items with sort:", sortState);
     setLoading(true);
     try {
-      const data = await workOrderItemsApi.list(workOrderId);
+      const data = await workOrderItemsApi.list(workOrderId, {
+        sort_by: sortState.sortBy || undefined,
+        sort_order: sortState.sortOrder,
+      });
       setItems(data.items);
     } finally {
       setLoading(false);
     }
-  };
+  }, [workOrderId, sortState]);
 
   useEffect(() => {
     fetchItems();
-  }, [workOrderId]);
+  }, [fetchItems]);
+
+  const handleSort = (column: string) => {
+    setSortState((prev) => ({
+      sortBy: column,
+      sortOrder:
+        prev.sortBy === column && prev.sortOrder === "asc" ? "desc" : "asc",
+    }));
+  };
 
   const resetForm = () => {
     setFormData({
@@ -333,11 +350,40 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">#</TableHead>
+                <SortableTableHead
+                  className="w-16"
+                  sortable
+                  sortKey="item_number"
+                  sortState={sortState}
+                  onSort={handleSort}
+                >
+                  #
+                </SortableTableHead>
                 <TableHead>Discrepancy</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Hours</TableHead>
+                <SortableTableHead
+                  sortable
+                  sortKey="category"
+                  sortState={sortState}
+                  onSort={handleSort}
+                >
+                  Category
+                </SortableTableHead>
+                <SortableTableHead
+                  sortable
+                  sortKey="status"
+                  sortState={sortState}
+                  onSort={handleSort}
+                >
+                  Status
+                </SortableTableHead>
+                <SortableTableHead
+                  sortable
+                  sortKey="hours_estimate"
+                  sortState={sortState}
+                  onSort={handleSort}
+                >
+                  Hours
+                </SortableTableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>

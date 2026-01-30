@@ -7,12 +7,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const searchParams = request.nextUrl.searchParams;
+  const queryString = searchParams.toString();
 
-  const response = await fetch(`${API_URL}/api/v1/work-orders/${id}/items`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(
+    `${API_URL}/api/v1/work-orders/${id}/items${queryString ? `?${queryString}` : ""}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   if (response.status === 404) {
     return NextResponse.json(

@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
     push: mockPush,
   }),
   useSearchParams: () => mockSearchParams,
+  usePathname: () => "/workorder",
 }));
 
 describe("WorkOrderList", () => {

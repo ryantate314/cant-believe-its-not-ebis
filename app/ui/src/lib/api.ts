@@ -12,6 +12,7 @@ import type {
   WorkOrderItemCreateInput,
   WorkOrderItemUpdateInput,
 } from "@/types/work-order-item";
+import type { SortOrder } from "@/types/sorting";
 
 const API_BASE = "/api";
 
@@ -68,6 +69,8 @@ export const workOrdersApi = {
     page_size?: number;
     search?: string;
     status?: string;
+    sort_by?: string;
+    sort_order?: SortOrder;
   }): Promise<WorkOrderListResponse> => {
     const searchParams = new URLSearchParams({
       city_id: params.city_id,
@@ -76,6 +79,8 @@ export const workOrdersApi = {
     });
     if (params.search) searchParams.set("search", params.search);
     if (params.status) searchParams.set("status", params.status);
+    if (params.sort_by) searchParams.set("sort_by", params.sort_by);
+    if (params.sort_order) searchParams.set("sort_order", params.sort_order);
     return fetchApi(`/work-orders?${searchParams}`);
   },
 
@@ -101,8 +106,18 @@ export const workOrdersApi = {
 
 // Work Order Items API
 export const workOrderItemsApi = {
-  list: (workOrderId: string): Promise<WorkOrderItemListResponse> =>
-    fetchApi(`/work-orders/${workOrderId}/items`),
+  list: (
+    workOrderId: string,
+    params?: { sort_by?: string; sort_order?: SortOrder }
+  ): Promise<WorkOrderItemListResponse> => {
+    const searchParams = new URLSearchParams();
+    if (params?.sort_by) searchParams.set("sort_by", params.sort_by);
+    if (params?.sort_order) searchParams.set("sort_order", params.sort_order);
+    const queryString = searchParams.toString();
+    return fetchApi(
+      `/work-orders/${workOrderId}/items${queryString ? `?${queryString}` : ""}`
+    );
+  },
 
   get: (workOrderId: string, itemId: string): Promise<WorkOrderItem> =>
     fetchApi(`/work-orders/${workOrderId}/items/${itemId}`),

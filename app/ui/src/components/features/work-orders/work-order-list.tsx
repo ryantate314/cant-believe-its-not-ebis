@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { workOrdersApi, citiesApi } from "@/lib/api";
+import { useSortParams } from "@/hooks/use-sort-params";
 import type {
   WorkOrder,
   WorkOrderStatus,
@@ -67,6 +69,10 @@ export function WorkOrderList() {
   const search = searchParams.get("search") || "";
   const status = searchParams.get("status") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const { sortState, updateSort, sortBy, sortOrder } = useSortParams({
+    defaultSortBy: "created_at",
+    defaultSortOrder: "desc",
+  });
 
   useEffect(() => {
     citiesApi.list().then((data) => setCities(data.items));
@@ -85,13 +91,15 @@ export function WorkOrderList() {
         page,
         search: search || undefined,
         status: status || undefined,
+        sort_by: sortBy || undefined,
+        sort_order: sortOrder,
       })
       .then((data) => {
         setWorkOrders(data.items);
         setTotal(data.total);
       })
       .finally(() => setLoading(false));
-  }, [cityId, search, status, page]);
+  }, [cityId, search, status, page, sortBy, sortOrder]);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -176,13 +184,48 @@ export function WorkOrderList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>WO #</TableHead>
-                  <TableHead>Customer</TableHead>
+                  <SortableTableHead
+                    sortable
+                    sortKey="work_order_number"
+                    sortState={sortState}
+                    onSort={updateSort}
+                  >
+                    WO #
+                  </SortableTableHead>
+                  <SortableTableHead
+                    sortable
+                    sortKey="customer_name"
+                    sortState={sortState}
+                    onSort={updateSort}
+                  >
+                    Customer
+                  </SortableTableHead>
                   <TableHead>Aircraft</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
+                  <SortableTableHead
+                    sortable
+                    sortKey="status"
+                    sortState={sortState}
+                    onSort={updateSort}
+                  >
+                    Status
+                  </SortableTableHead>
+                  <SortableTableHead
+                    sortable
+                    sortKey="priority"
+                    sortState={sortState}
+                    onSort={updateSort}
+                  >
+                    Priority
+                  </SortableTableHead>
                   <TableHead>Items</TableHead>
-                  <TableHead>Created</TableHead>
+                  <SortableTableHead
+                    sortable
+                    sortKey="created_at"
+                    sortState={sortState}
+                    onSort={updateSort}
+                  >
+                    Created
+                  </SortableTableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

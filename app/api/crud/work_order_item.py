@@ -1,11 +1,20 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, asc, desc
 from uuid import UUID
 from datetime import datetime
 
 from models.work_order import WorkOrder
 from models.work_order_item import WorkOrderItem
 from schemas.work_order_item import WorkOrderItemCreate, WorkOrderItemUpdate
+from core.sorting import SortOrder
+
+# Allowed columns for sorting work order items
+WORK_ORDER_ITEM_SORT_COLUMNS = {
+    "item_number": WorkOrderItem.item_number,
+    "status": WorkOrderItem.status,
+    "category": WorkOrderItem.category,
+    "hours_estimate": WorkOrderItem.hours_estimate,
+}
 
 
 async def get_next_item_number(db: AsyncSession, work_order_id: int) -> int:
@@ -18,7 +27,10 @@ async def get_next_item_number(db: AsyncSession, work_order_id: int) -> int:
 
 
 async def get_work_order_items(
-    db: AsyncSession, wo_uuid: UUID
+    db: AsyncSession,
+    wo_uuid: UUID,
+    sort_by: str | None = None,
+    sort_order: SortOrder = SortOrder.ASC,
 ) -> tuple[list[WorkOrderItem], int]:
     """Get all items for a work order."""
     # Get work order first
@@ -29,11 +41,15 @@ async def get_work_order_items(
         return [], 0
 
     # Get items
-    query = (
-        select(WorkOrderItem)
-        .where(WorkOrderItem.work_order_id == work_order.id)
-        .order_by(WorkOrderItem.item_number)
-    )
+    query = select(WorkOrderItem).where(WorkOrderItem.work_order_id == work_order.id)
+
+    # Apply sorting
+    sort_column = WORK_ORDER_ITEM_SORT_COLUMNS.get(sort_by, WorkOrderItem.item_number)
+    if sort_order == SortOrder.ASC:
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
     result = await db.execute(query)
     items = result.scalars().all()
 

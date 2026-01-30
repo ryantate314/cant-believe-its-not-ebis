@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
+from typing import Literal
 
 from core.database import get_db
+from core.sorting import SortOrder
 from schemas.work_order_item import (
     WorkOrderItemCreate,
     WorkOrderItemUpdate,
@@ -50,6 +52,9 @@ def item_to_response(item, work_order_uuid: UUID) -> WorkOrderItemResponse:
 @router.get("", response_model=WorkOrderItemListResponse)
 async def list_work_order_items(
     work_order_id: UUID,
+    sort_by: Literal["item_number", "status", "category", "hours_estimate"]
+    | None = Query(None, description="Column to sort by"),
+    sort_order: SortOrder = Query(SortOrder.ASC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
 ):
     """List items for a work order."""
@@ -58,7 +63,9 @@ async def list_work_order_items(
     if not work_order:
         raise HTTPException(status_code=404, detail="Work order not found")
 
-    items, total = await get_work_order_items(db, work_order_id)
+    items, total = await get_work_order_items(
+        db, work_order_id, sort_by=sort_by, sort_order=sort_order
+    )
     return WorkOrderItemListResponse(
         items=[item_to_response(item, work_order_id) for item in items],
         total=total,

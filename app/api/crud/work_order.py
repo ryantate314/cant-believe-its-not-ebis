@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, asc, desc
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 from datetime import datetime
@@ -7,6 +7,16 @@ from datetime import datetime
 from models.work_order import WorkOrder
 from models.city import City
 from schemas.work_order import WorkOrderCreate, WorkOrderUpdate
+from core.sorting import SortOrder
+
+# Allowed columns for sorting work orders
+WORK_ORDER_SORT_COLUMNS = {
+    "work_order_number": WorkOrder.work_order_number,
+    "customer_name": WorkOrder.customer_name,
+    "status": WorkOrder.status,
+    "priority": WorkOrder.priority,
+    "created_at": WorkOrder.created_at,
+}
 
 
 async def get_next_sequence_number(db: AsyncSession, city_id: int) -> int:
@@ -33,6 +43,8 @@ async def get_work_orders(
     page_size: int = 20,
     search: str | None = None,
     status: str | None = None,
+    sort_by: str | None = None,
+    sort_order: SortOrder = SortOrder.DESC,
 ) -> tuple[list[WorkOrder], int]:
     """Get work orders for a city with pagination and filtering."""
     # Get city first
@@ -75,9 +87,16 @@ async def get_work_orders(
     count_result = await db.execute(count_query)
     total = count_result.scalar()
 
+    # Apply sorting
+    sort_column = WORK_ORDER_SORT_COLUMNS.get(sort_by, WorkOrder.created_at)
+    if sort_order == SortOrder.ASC:
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
     # Apply pagination
     offset = (page - 1) * page_size
-    query = query.order_by(WorkOrder.created_at.desc()).offset(offset).limit(page_size)
+    query = query.offset(offset).limit(page_size)
 
     result = await db.execute(query)
     work_orders = result.scalars().all()
