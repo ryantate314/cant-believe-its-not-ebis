@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI
 from core.context import RequestContext, get_request_context
 from core.middleware import ContextMiddleware
 from models import register_all_audit_listeners
+from routers.audit import router as audit_router
 
 
 @asynccontextmanager
@@ -20,6 +21,9 @@ app = FastAPI(title="Cirrus MRO API", lifespan=lifespan)
 
 # Register middleware
 app.add_middleware(ContextMiddleware)
+
+# Register routers
+app.include_router(audit_router)
 
 
 @app.get("/")

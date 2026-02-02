@@ -164,7 +164,7 @@ CREATE INDEX idx_audit_user ON audit_log(user_id);
 | 1 | Database Schema | Audit table migration, indexes, constraints | complete | - | - | [audit-log-database-schema.plan.md](../plans/audit-log-database-schema.plan.md) |
 | 2 | Request Context | Middleware to capture user_id, IP, session from request | complete | with 1 | - | [request-context-middleware.plan.md](../plans/completed/request-context-middleware.plan.md) |
 | 3 | Change Capture | Registration mechanism and audit logging hooks | complete | - | 1, 2 | [change-capture.plan.md](../plans/completed/change-capture.plan.md) |
-| 4 | Retrieval API | GET endpoint with filtering and pagination | pending | - | 1, 3 | - |
+| 4 | Retrieval API | GET endpoint with filtering and pagination | complete | - | 1, 3 | [audit-retrieval-api.plan.md](../plans/completed/audit-retrieval-api.plan.md) |
 | 5 | Testing & Docs | Integration tests, developer documentation | pending | - | 3, 4 | - |
 
 ### Phase Details
