@@ -5,6 +5,7 @@ from typing import Literal
 
 from core.database import get_db
 from core.sorting import SortOrder
+from core.auth import get_current_user, User
 from schemas.work_order import (
     WorkOrderCreate,
     WorkOrderUpdate,
@@ -74,6 +75,7 @@ async def list_work_orders(
     ] | None = Query(None, description="Column to sort by"),
     sort_order: SortOrder = Query(SortOrder.DESC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """List work orders for a city."""
     work_orders, total = await get_work_orders(
@@ -98,8 +100,11 @@ async def list_work_orders(
 async def create_new_work_order(
     work_order_in: WorkOrderCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new work order."""
+    # Set created_by from authenticated user
+    work_order_in.created_by = current_user.email
     try:
         work_order = await create_work_order(db, work_order_in)
         return work_order_to_response(work_order)
@@ -111,6 +116,7 @@ async def create_new_work_order(
 async def get_work_order(
     work_order_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Get a work order by ID."""
     work_order = await get_work_order_by_uuid(db, work_order_id)
@@ -124,8 +130,11 @@ async def update_existing_work_order(
     work_order_id: UUID,
     work_order_in: WorkOrderUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Update a work order."""
+    # Set updated_by from authenticated user
+    work_order_in.updated_by = current_user.email
     work_order = await update_work_order(db, work_order_id, work_order_in)
     if not work_order:
         raise HTTPException(status_code=404, detail="Work order not found")
@@ -136,6 +145,7 @@ async def update_existing_work_order(
 async def delete_existing_work_order(
     work_order_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a work order."""
     deleted = await delete_work_order(db, work_order_id)

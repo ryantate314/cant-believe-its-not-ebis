@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_URL = process.env.API_URL || "http://localhost:8000";
+import { API_URL, getProxyHeaders } from "../_lib/proxy";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -8,9 +7,7 @@ export async function GET(request: NextRequest) {
   const response = await fetch(
     `${API_URL}/api/v1/aircraft?${searchParams.toString()}`,
     {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getProxyHeaders(request),
     }
   );
 
@@ -23,9 +20,7 @@ export async function POST(request: NextRequest) {
 
   const response = await fetch(`${API_URL}/api/v1/aircraft`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getProxyHeaders(request),
     body: JSON.stringify(body),
   });
 

@@ -5,6 +5,7 @@ from typing import Literal
 
 from core.database import get_db
 from core.sorting import SortOrder
+from core.auth import get_current_user, User
 from schemas.work_order_item import (
     WorkOrderItemCreate,
     WorkOrderItemUpdate,
@@ -56,6 +57,7 @@ async def list_work_order_items(
     | None = Query(None, description="Column to sort by"),
     sort_order: SortOrder = Query(SortOrder.ASC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """List items for a work order."""
     # Verify work order exists
@@ -77,8 +79,11 @@ async def create_new_work_order_item(
     work_order_id: UUID,
     item_in: WorkOrderItemCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new work order item."""
+    # Set created_by from authenticated user
+    item_in.created_by = current_user.email
     item = await create_work_order_item(db, work_order_id, item_in)
     if not item:
         raise HTTPException(status_code=404, detail="Work order not found")
@@ -90,6 +95,7 @@ async def get_work_order_item(
     work_order_id: UUID,
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Get a work order item by ID."""
     # Verify work order exists
@@ -109,6 +115,7 @@ async def update_existing_work_order_item(
     item_id: UUID,
     item_in: WorkOrderItemUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Update a work order item."""
     # Verify work order exists
@@ -121,6 +128,8 @@ async def update_existing_work_order_item(
     if not existing_item or existing_item.work_order_id != work_order.id:
         raise HTTPException(status_code=404, detail="Work order item not found")
 
+    # Set updated_by from authenticated user
+    item_in.updated_by = current_user.email
     item = await update_work_order_item(db, item_id, item_in)
     return item_to_response(item, work_order_id)
 
@@ -130,6 +139,7 @@ async def delete_existing_work_order_item(
     work_order_id: UUID,
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a work order item."""
     # Verify work order exists

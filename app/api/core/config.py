@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     # API settings
     api_v1_prefix: str = "/api/v1"
 
+    # Azure AD settings
+    azure_ad_tenant_id: str = ""
+    azure_ad_client_id: str = ""
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

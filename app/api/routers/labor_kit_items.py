@@ -5,6 +5,7 @@ from typing import Literal
 
 from core.database import get_db
 from core.sorting import SortOrder
+from core.auth import get_current_user, User
 from schemas.labor_kit_item import (
     LaborKitItemCreate,
     LaborKitItemUpdate,
@@ -55,6 +56,7 @@ async def list_labor_kit_items(
     | None = Query(None, description="Column to sort by"),
     sort_order: SortOrder = Query(SortOrder.ASC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """List items for a labor kit."""
     # Verify labor kit exists
@@ -76,8 +78,11 @@ async def create_new_labor_kit_item(
     kit_id: UUID,
     item_in: LaborKitItemCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new labor kit item."""
+    # Set created_by from authenticated user
+    item_in.created_by = current_user.email
     item = await create_labor_kit_item(db, kit_id, item_in)
     if not item:
         raise HTTPException(status_code=404, detail="Labor kit not found")
@@ -89,6 +94,7 @@ async def get_labor_kit_item(
     kit_id: UUID,
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Get a labor kit item by ID."""
     # Verify labor kit exists
@@ -108,6 +114,7 @@ async def update_existing_labor_kit_item(
     item_id: UUID,
     item_in: LaborKitItemUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Update a labor kit item."""
     # Verify labor kit exists
@@ -120,6 +127,8 @@ async def update_existing_labor_kit_item(
     if not existing_item or existing_item.labor_kit_id != labor_kit.id:
         raise HTTPException(status_code=404, detail="Labor kit item not found")
 
+    # Set updated_by from authenticated user
+    item_in.updated_by = current_user.email
     item = await update_labor_kit_item(db, item_id, item_in)
     return item_to_response(item, kit_id)
 
@@ -129,6 +138,7 @@ async def delete_existing_labor_kit_item(
     kit_id: UUID,
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a labor kit item."""
     # Verify labor kit exists

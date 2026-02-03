@@ -5,6 +5,7 @@ from typing import Literal
 
 from core.database import get_db
 from core.sorting import SortOrder
+from core.auth import get_current_user, User
 from schemas.aircraft import (
     AircraftCreate,
     AircraftUpdate,
@@ -62,6 +63,7 @@ async def list_aircraft(
     ] | None = Query(None, description="Column to sort by"),
     sort_order: SortOrder = Query(SortOrder.DESC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """List aircraft with pagination and filtering."""
     aircraft_list, total = await get_aircraft_list(
@@ -86,8 +88,11 @@ async def list_aircraft(
 async def create_new_aircraft(
     aircraft_in: AircraftCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new aircraft."""
+    # Set created_by from authenticated user
+    aircraft_in.created_by = current_user.email
     try:
         aircraft = await create_aircraft(db, aircraft_in)
         return aircraft_to_response(aircraft)
@@ -99,6 +104,7 @@ async def create_new_aircraft(
 async def get_aircraft(
     aircraft_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Get an aircraft by ID."""
     aircraft = await get_aircraft_by_uuid(db, aircraft_id)
@@ -112,8 +118,11 @@ async def update_existing_aircraft(
     aircraft_id: UUID,
     aircraft_in: AircraftUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Update an aircraft."""
+    # Set updated_by from authenticated user
+    aircraft_in.updated_by = current_user.email
     try:
         aircraft = await update_aircraft(db, aircraft_id, aircraft_in)
         if not aircraft:
@@ -127,6 +136,7 @@ async def update_existing_aircraft(
 async def delete_existing_aircraft(
     aircraft_id: UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete an aircraft."""
     try:

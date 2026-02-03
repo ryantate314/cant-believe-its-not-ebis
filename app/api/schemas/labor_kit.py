@@ -15,7 +15,7 @@ class LaborKitBase(BaseModel):
 class LaborKitCreate(LaborKitBase):
     """Schema for creating a labor kit."""
 
-    created_by: str
+    created_by: str | None = None  # Set by backend from auth token
 
 
 class LaborKitUpdate(BaseModel):

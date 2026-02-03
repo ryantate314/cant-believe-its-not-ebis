@@ -23,7 +23,7 @@ class AircraftCreate(AircraftBase):
     """Schema for creating an aircraft."""
 
     primary_city_id: UUID | None = None
-    created_by: str
+    created_by: str | None = None  # Set by backend from auth token
 
 
 class AircraftUpdate(BaseModel):

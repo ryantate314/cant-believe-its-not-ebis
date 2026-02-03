@@ -191,7 +191,7 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
 
     setApplyingKit(true);
     try {
-      const result = await laborKitsApi.apply(selectedKitId, workOrderId, "system");
+      const result = await laborKitsApi.apply(selectedKitId, workOrderId);
       setApplyKitDialogOpen(false);
       setSelectedKitId("");
       fetchItems();

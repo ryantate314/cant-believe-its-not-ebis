@@ -2,6 +2,7 @@
 
 import { LayoutDashboard, ClipboardList, Plane } from "lucide-react";
 import { AppSidebar, type NavItem } from "@/components/features/app-sidebar";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 const userNavItems: NavItem[] = [
   {
@@ -27,9 +28,9 @@ export default function UserLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <AuthGuard>
       <AppSidebar navItems={userNavItems} />
       <main className="flex-1 p-4">{children}</main>
-    </>
+    </AuthGuard>
   );
 }

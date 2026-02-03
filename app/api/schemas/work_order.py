@@ -54,7 +54,7 @@ class WorkOrderCreate(WorkOrderBase):
 
     city_id: UUID
     aircraft_id: UUID
-    created_by: str
+    created_by: str | None = None  # Set by backend from auth token
 
 
 class WorkOrderUpdate(BaseModel):

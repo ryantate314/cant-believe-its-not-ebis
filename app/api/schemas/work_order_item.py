@@ -35,7 +35,7 @@ class WorkOrderItemBase(BaseModel):
 class WorkOrderItemCreate(WorkOrderItemBase):
     """Schema for creating a work order item."""
 
-    created_by: str
+    created_by: str | None = None  # Set by backend from auth token
 
 
 class WorkOrderItemUpdate(BaseModel):

@@ -30,6 +30,7 @@ import type {
   AircraftUpdateInput,
 } from "@/types/aircraft";
 import type { SortOrder } from "@/types/sorting";
+import { authFetch } from "@/lib/auth-fetch";
 
 const API_BASE = "/api";
 
@@ -47,7 +48,7 @@ async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await authFetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -199,8 +200,8 @@ export const laborKitsApi = {
       method: "DELETE",
     }),
 
-  apply: (kitId: string, workOrderId: string, createdBy: string): Promise<ApplyLaborKitResponse> =>
-    fetchApi(`/labor-kits/${kitId}/apply/${workOrderId}?created_by=${encodeURIComponent(createdBy)}`, {
+  apply: (kitId: string, workOrderId: string): Promise<ApplyLaborKitResponse> =>
+    fetchApi(`/labor-kits/${kitId}/apply/${workOrderId}`, {
       method: "POST",
     }),
 };

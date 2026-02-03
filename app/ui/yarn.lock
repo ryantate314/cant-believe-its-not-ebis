@@ -31,6 +31,23 @@
     "@csstools/css-tokenizer" "^3.0.3"
     lru-cache "^10.4.3"
 
+"@azure/msal-browser@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@azure/msal-browser/-/msal-browser-5.1.0.tgz#206daca386b18fc86872bd2ce2ce93d5b51137de"
+  integrity sha512-5tZcp1zcALSLJvnxkmJ8MYxLtZzEyq28wX2jSV4Kz2QaHty4eYIb/Pc44DARLfgHD+G9F82k9nD7J89MbFRQxA==
+  dependencies:
+    "@azure/msal-common" "16.0.3"
+
+"@azure/msal-common@16.0.3":
+  version "16.0.3"
+  resolved "https://registry.yarnpkg.com/@azure/msal-common/-/msal-common-16.0.3.tgz#30884832f201a56bf35cf5538d618ed4c8c84977"
+  integrity sha512-3aedNnM0CHVuVZ+BqembdZWgovqe96BJ4YxGoIK0+qhoBZQsAhfwXdhjen72K94pkSQHtzlJ7fAq6w7knFZsng==
+
+"@azure/msal-react@^5.0.3":
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/@azure/msal-react/-/msal-react-5.0.3.tgz#f74d0cb4ad2ad1654812984f31d6f1056cae6077"
+  integrity sha512-zz8USqfunXrZKFFG1tcfSlr+84NFMbePASj8NHB9oL0MIXdoWzADRUXkx+gKdB9dP/yDtfpGPOUgUAYGmpjTuw==
+
 "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.28.6":
   version "7.28.6"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.28.6.tgz#72499312ec58b1e2245ba4a4f550c132be4982f7"

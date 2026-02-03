@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_URL = process.env.API_URL || "http://localhost:8000";
+import { API_URL, getProxyHeaders } from "../../_lib/proxy";
 
 export async function GET(
   request: NextRequest,
@@ -9,9 +8,7 @@ export async function GET(
   const { id } = await params;
 
   const response = await fetch(`${API_URL}/api/v1/work-orders/${id}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getProxyHeaders(request),
   });
 
   if (response.status === 404) {
@@ -34,9 +31,7 @@ export async function PUT(
 
   const response = await fetch(`${API_URL}/api/v1/work-orders/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getProxyHeaders(request),
     body: JSON.stringify(body),
   });
 
@@ -59,6 +54,7 @@ export async function DELETE(
 
   const response = await fetch(`${API_URL}/api/v1/work-orders/${id}`, {
     method: "DELETE",
+    headers: getProxyHeaders(request),
   });
 
   if (response.status === 404) {
