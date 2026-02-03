@@ -164,10 +164,29 @@ async def update_aircraft(
 
 
 async def delete_aircraft(db: AsyncSession, aircraft_uuid: UUID) -> bool:
-    """Delete an aircraft."""
+    """Delete an aircraft.
+
+    Raises:
+        ValueError: If aircraft has associated work orders.
+    """
     aircraft = await get_aircraft_by_uuid(db, aircraft_uuid)
     if not aircraft:
         return False
+
+    # Check for associated work orders
+    from models.work_order import WorkOrder
+
+    work_order_count_query = select(func.count(WorkOrder.id)).where(
+        WorkOrder.aircraft_id == aircraft.id
+    )
+    count_result = await db.execute(work_order_count_query)
+    work_order_count = count_result.scalar()
+
+    if work_order_count > 0:
+        raise ValueError(
+            f"Cannot delete aircraft {aircraft.registration_number}: "
+            f"it has {work_order_count} associated work order(s)"
+        )
 
     await db.delete(aircraft)
     return True

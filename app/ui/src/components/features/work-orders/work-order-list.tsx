@@ -239,7 +239,7 @@ export function WorkOrderList() {
                       {wo.work_order_number}
                     </TableCell>
                     <TableCell>{wo.customer_name || "-"}</TableCell>
-                    <TableCell>{wo.aircraft_registration || "-"}</TableCell>
+                    <TableCell>{wo.aircraft.registration_number}</TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"

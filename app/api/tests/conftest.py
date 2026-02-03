@@ -13,6 +13,7 @@ from sqlalchemy.pool import StaticPool
 from core.database import Base, get_db
 from main import app
 from models.city import City
+from models.aircraft import Aircraft
 from models.work_order import WorkOrder, WorkOrderStatus, PriorityLevel, WorkOrderType
 from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
 from models.labor_kit import LaborKit
@@ -108,20 +109,37 @@ async def test_city_inactive(test_session: AsyncSession) -> City:
 
 
 @pytest.fixture
-async def test_work_order(test_session: AsyncSession, test_city: City) -> WorkOrder:
+async def test_aircraft(test_session: AsyncSession) -> Aircraft:
+    """Create a test aircraft."""
+    aircraft = Aircraft(
+        uuid=uuid4(),
+        registration_number="N12345",
+        serial_number="SN12345",
+        make="Cessna",
+        model="172",
+        year_built=2020,
+        is_active=True,
+        created_by="test_user",
+    )
+    test_session.add(aircraft)
+    await test_session.commit()
+    await test_session.refresh(aircraft)
+    return aircraft
+
+
+@pytest.fixture
+async def test_work_order(
+    test_session: AsyncSession, test_city: City, test_aircraft: Aircraft
+) -> WorkOrder:
     """Create a test work order."""
     work_order = WorkOrder(
         uuid=uuid4(),
         work_order_number="KTYS00001-01-2026",
         sequence_number=1,
         city_id=test_city.id,
+        aircraft_id=test_aircraft.id,
         work_order_type=WorkOrderType.WORK_ORDER,
         status=WorkOrderStatus.CREATED,
-        aircraft_registration="N12345",
-        aircraft_serial="SN12345",
-        aircraft_make="Cessna",
-        aircraft_model="172",
-        aircraft_year=2020,
         customer_name="Test Customer",
         customer_po_number="PO-001",
         priority=PriorityLevel.NORMAL,

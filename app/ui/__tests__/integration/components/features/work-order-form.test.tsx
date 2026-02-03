@@ -54,15 +54,15 @@ describe("WorkOrderForm", () => {
       expect(mockBack).toHaveBeenCalled();
     });
 
-    it("should render all input fields", () => {
+    it("should render all input fields", async () => {
       render(<WorkOrderForm cityId="city-uuid-1" />);
 
+      // Wait for aircraft to load
+      await waitFor(() => {
+        expect(screen.getByText("Aircraft *")).toBeInTheDocument();
+      });
+
       // Check for labels
-      expect(screen.getByLabelText("Registration")).toBeInTheDocument();
-      expect(screen.getByLabelText("Serial Number")).toBeInTheDocument();
-      expect(screen.getByLabelText("Make")).toBeInTheDocument();
-      expect(screen.getByLabelText("Model")).toBeInTheDocument();
-      expect(screen.getByLabelText("Year")).toBeInTheDocument();
       expect(screen.getByLabelText("Customer Name")).toBeInTheDocument();
       expect(screen.getByLabelText("PO Number")).toBeInTheDocument();
       expect(screen.getByLabelText("Lead Technician")).toBeInTheDocument();
@@ -71,40 +71,42 @@ describe("WorkOrderForm", () => {
       expect(screen.getByLabelText("Status Notes")).toBeInTheDocument();
     });
 
-    it("should submit form and create work order", async () => {
+    it("should open aircraft selection modal when clicking Select button", async () => {
       const user = userEvent.setup();
       render(<WorkOrderForm cityId="city-uuid-1" />);
 
-      // Fill in some fields
-      await user.type(screen.getByLabelText("Registration"), "N99999");
-      await user.type(screen.getByLabelText("Customer Name"), "New Customer");
-
-      // Submit the form
-      await user.click(
-        screen.getByRole("button", { name: "Create Work Order" })
-      );
-
+      // Wait for aircraft to load
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalled();
+        expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
       });
 
-      // Should navigate to the new work order
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/workorder\/wo-uuid-/)
-      );
+      // Click the aircraft selector button
+      const aircraftButton = screen.getByRole("button", { name: /select aircraft/i });
+      await user.click(aircraftButton);
+
+      // Modal should open with search input
+      await waitFor(() => {
+        expect(screen.getByText("Select Aircraft")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("Search aircraft...")).toBeInTheDocument();
+      });
     });
 
-    it("should call onSuccess callback instead of navigating", async () => {
+    it("should show error when submitting without aircraft", async () => {
       const user = userEvent.setup();
-      const onSuccess = vi.fn();
-      render(<WorkOrderForm cityId="city-uuid-1" onSuccess={onSuccess} />);
+      render(<WorkOrderForm cityId="city-uuid-1" />);
 
+      // Wait for aircraft to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
+      });
+
+      // Submit without selecting aircraft
       await user.click(
         screen.getByRole("button", { name: "Create Work Order" })
       );
 
       await waitFor(() => {
-        expect(onSuccess).toHaveBeenCalled();
+        expect(screen.getByText("Please select an aircraft")).toBeInTheDocument();
       });
 
       expect(mockPush).not.toHaveBeenCalled();
@@ -133,14 +135,14 @@ describe("WorkOrderForm", () => {
   });
 
   describe("edit mode", () => {
-    it("should populate form with existing work order data", () => {
+    it("should populate form with existing work order data", async () => {
       render(<WorkOrderForm cityId="city-uuid-1" workOrder={mockWorkOrder} />);
 
-      expect(screen.getByLabelText("Registration")).toHaveValue("N12345");
-      expect(screen.getByLabelText("Serial Number")).toHaveValue("SN12345");
-      expect(screen.getByLabelText("Make")).toHaveValue("Cessna");
-      expect(screen.getByLabelText("Model")).toHaveValue("172");
-      expect(screen.getByLabelText("Year")).toHaveValue(2020);
+      // Wait for aircraft to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
+      });
+
       expect(screen.getByLabelText("Customer Name")).toHaveValue(
         "Test Customer"
       );
@@ -166,6 +168,11 @@ describe("WorkOrderForm", () => {
         />
       );
 
+      // Wait for aircraft to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
+      });
+
       // Modify a field
       const customerInput = screen.getByLabelText("Customer Name");
       await user.clear(customerInput);
@@ -186,20 +193,15 @@ describe("WorkOrderForm", () => {
       const user = userEvent.setup();
       render(<WorkOrderForm cityId="city-uuid-1" />);
 
-      const registrationInput = screen.getByLabelText("Registration");
-      await user.type(registrationInput, "N12345");
+      // Wait for aircraft to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
+      });
 
-      expect(registrationInput).toHaveValue("N12345");
-    });
+      const customerInput = screen.getByLabelText("Customer Name");
+      await user.type(customerInput, "Test Customer");
 
-    it("should handle year input as number", async () => {
-      const user = userEvent.setup();
-      render(<WorkOrderForm cityId="city-uuid-1" />);
-
-      const yearInput = screen.getByLabelText("Year");
-      await user.type(yearInput, "2025");
-
-      expect(yearInput).toHaveValue(2025);
+      expect(customerInput).toHaveValue("Test Customer");
     });
 
     it("should handle textarea input", async () => {

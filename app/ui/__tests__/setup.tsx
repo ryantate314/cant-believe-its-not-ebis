@@ -3,6 +3,16 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, beforeAll, afterAll, vi } from "vitest";
 import { server } from "./mocks/server";
 
+// Mock ResizeObserver for components that use it (like cmdk)
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock scrollIntoView for components that use it (like cmdk)
+Element.prototype.scrollIntoView = vi.fn();
+
 // Establish API mocking before all tests
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });

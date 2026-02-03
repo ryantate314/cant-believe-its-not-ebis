@@ -18,16 +18,10 @@ class WorkOrderFactory(factory.Factory):
     work_order_number = factory.Sequence(lambda n: f"TEST{n:05d}-01-2026")
     sequence_number = factory.Sequence(lambda n: n + 1)
     city_id = 1
+    aircraft_id = 1
     work_order_type = WorkOrderType.WORK_ORDER
     status = WorkOrderStatus.CREATED
     status_notes = None
-
-    # Aircraft
-    aircraft_registration = factory.Sequence(lambda n: f"N{n:05d}")
-    aircraft_serial = factory.Sequence(lambda n: f"SN{n:05d}")
-    aircraft_make = "Cessna"
-    aircraft_model = "172"
-    aircraft_year = 2020
 
     # Customer
     customer_name = factory.Sequence(lambda n: f"Customer {n}")

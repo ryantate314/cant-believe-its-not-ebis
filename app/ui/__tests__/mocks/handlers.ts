@@ -1,12 +1,14 @@
 import { http, HttpResponse } from "msw";
 import {
   mockCities,
+  mockAircraft,
+  mockAircraftBrief,
   mockWorkOrder,
   mockWorkOrders,
   mockWorkOrderItem,
   mockWorkOrderItems,
 } from "./data";
-import type { WorkOrder } from "@/types/work-order";
+import type { WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
 
 // Track created items for sequence number generation
@@ -54,7 +56,7 @@ export const handlers = [
         (wo) =>
           wo.work_order_number.toLowerCase().includes(searchLower) ||
           wo.customer_name?.toLowerCase().includes(searchLower) ||
-          wo.aircraft_registration?.toLowerCase().includes(searchLower)
+          wo.aircraft.registration_number.toLowerCase().includes(searchLower)
       );
     }
 
@@ -95,6 +97,23 @@ export const handlers = [
       );
     }
 
+    const aircraft = mockAircraft.find((a) => a.id === body.aircraft_id);
+    if (!aircraft) {
+      return HttpResponse.json(
+        { detail: `Aircraft not found: ${body.aircraft_id}` },
+        { status: 400 }
+      );
+    }
+
+    const aircraftBrief: AircraftBrief = {
+      id: aircraft.id,
+      registration_number: aircraft.registration_number,
+      serial_number: aircraft.serial_number,
+      make: aircraft.make,
+      model: aircraft.model,
+      year_built: aircraft.year_built,
+    };
+
     const now = new Date().toISOString();
     const newWorkOrder: WorkOrder = {
       id: `wo-uuid-${Date.now()}`,
@@ -105,14 +124,10 @@ export const handlers = [
         code: city.code,
         name: city.name,
       },
+      aircraft: aircraftBrief,
       work_order_type: (body.work_order_type as WorkOrder["work_order_type"]) || "work_order",
       status: (body.status as WorkOrder["status"]) || "created",
       status_notes: (body.status_notes as string) || null,
-      aircraft_registration: (body.aircraft_registration as string) || null,
-      aircraft_serial: (body.aircraft_serial as string) || null,
-      aircraft_make: (body.aircraft_make as string) || null,
-      aircraft_model: (body.aircraft_model as string) || null,
-      aircraft_year: (body.aircraft_year as number) || null,
       customer_name: (body.customer_name as string) || null,
       customer_po_number: (body.customer_po_number as string) || null,
       due_date: (body.due_date as string) || null,
@@ -284,5 +299,40 @@ export const handlers = [
     }
 
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Aircraft API
+  http.get("/api/aircraft", ({ request }) => {
+    const url = new URL(request.url);
+    const activeOnly = url.searchParams.get("active_only") !== "false";
+    const search = url.searchParams.get("search");
+
+    let filtered = activeOnly ? mockAircraft.filter((a) => a.is_active) : mockAircraft;
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (a) =>
+          a.registration_number.toLowerCase().includes(searchLower) ||
+          a.serial_number?.toLowerCase().includes(searchLower) ||
+          a.make?.toLowerCase().includes(searchLower) ||
+          a.model?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return HttpResponse.json({
+      items: filtered,
+      total: filtered.length,
+      page: 1,
+      page_size: 100,
+    });
+  }),
+
+  http.get("/api/aircraft/:id", ({ params }) => {
+    const aircraft = mockAircraft.find((a) => a.id === params.id);
+    if (!aircraft) {
+      return HttpResponse.json({ detail: "Aircraft not found" }, { status: 404 });
+    }
+    return HttpResponse.json(aircraft);
   }),
 ];

@@ -37,3 +37,4 @@ class Aircraft(Base):
 
     # Relationships
     primary_city: Mapped["City"] = relationship("City", back_populates="aircraft")
+    work_orders: Mapped[list["WorkOrder"]] = relationship("WorkOrder", back_populates="aircraft")

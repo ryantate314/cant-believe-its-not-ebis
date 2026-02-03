@@ -16,6 +16,7 @@ from schemas.work_order import (
     PriorityLevel,
     WorkOrderType,
     CityBrief,
+    AircraftBrief,
 )
 from schemas.work_order_item import (
     WorkOrderItemBase,
@@ -64,30 +65,28 @@ class TestWorkOrderSchemas:
         assert wo.work_order_type == WorkOrderType.WORK_ORDER
         assert wo.status == WorkOrderStatus.CREATED
         assert wo.priority == PriorityLevel.NORMAL
-        assert wo.aircraft_registration is None
         assert wo.customer_name is None
 
     def test_work_order_create_required_fields(self):
         """Test WorkOrderCreate with required fields."""
         city_id = uuid4()
-        wo = WorkOrderCreate(city_id=city_id, created_by="test_user")
+        aircraft_id = uuid4()
+        wo = WorkOrderCreate(city_id=city_id, aircraft_id=aircraft_id, created_by="test_user")
         assert wo.city_id == city_id
+        assert wo.aircraft_id == aircraft_id
         assert wo.created_by == "test_user"
         assert wo.status == WorkOrderStatus.CREATED
 
     def test_work_order_create_with_all_fields(self):
         """Test WorkOrderCreate with all optional fields."""
         city_id = uuid4()
+        aircraft_id = uuid4()
         wo = WorkOrderCreate(
             city_id=city_id,
+            aircraft_id=aircraft_id,
             created_by="test_user",
             work_order_type=WorkOrderType.QUOTE,
             status=WorkOrderStatus.OPEN,
-            aircraft_registration="N12345",
-            aircraft_serial="SN12345",
-            aircraft_make="Cessna",
-            aircraft_model="172",
-            aircraft_year=2020,
             customer_name="Test Customer",
             customer_po_number="PO-001",
             due_date=date(2026, 12, 31),
@@ -96,20 +95,27 @@ class TestWorkOrderSchemas:
             priority=PriorityLevel.HIGH,
         )
         assert wo.work_order_type == WorkOrderType.QUOTE
-        assert wo.aircraft_registration == "N12345"
-        assert wo.aircraft_year == 2020
+        assert wo.aircraft_id == aircraft_id
         assert wo.priority == PriorityLevel.HIGH
 
     def test_work_order_update_partial(self):
         """Test WorkOrderUpdate with partial data."""
         wo = WorkOrderUpdate(status=WorkOrderStatus.IN_PROGRESS)
         assert wo.status == WorkOrderStatus.IN_PROGRESS
-        assert wo.aircraft_registration is None
+        assert wo.aircraft_id is None
         assert wo.updated_by is None
+
+    def test_work_order_update_with_aircraft(self):
+        """Test WorkOrderUpdate with aircraft_id."""
+        aircraft_id = uuid4()
+        wo = WorkOrderUpdate(aircraft_id=aircraft_id, updated_by="admin")
+        assert wo.aircraft_id == aircraft_id
+        assert wo.updated_by == "admin"
 
     def test_work_order_response_complete(self):
         """Test WorkOrderResponse with complete data."""
         city_id = uuid4()
+        aircraft_id = uuid4()
         wo_id = uuid4()
         now = datetime.utcnow()
 
@@ -118,14 +124,17 @@ class TestWorkOrderSchemas:
             work_order_number="KTYS00001-01-2026",
             sequence_number=1,
             city=CityBrief(id=city_id, code="KTYS", name="Knoxville"),
+            aircraft=AircraftBrief(
+                id=aircraft_id,
+                registration_number="N12345",
+                serial_number="SN12345",
+                make="Cessna",
+                model="172",
+                year_built=2020,
+            ),
             work_order_type=WorkOrderType.WORK_ORDER,
             status=WorkOrderStatus.CREATED,
             status_notes=None,
-            aircraft_registration="N12345",
-            aircraft_serial="SN12345",
-            aircraft_make="Cessna",
-            aircraft_model="172",
-            aircraft_year=2020,
             customer_name="Test Customer",
             customer_po_number="PO-001",
             due_date=date(2026, 12, 31),
@@ -142,6 +151,7 @@ class TestWorkOrderSchemas:
         )
         assert response.work_order_number == "KTYS00001-01-2026"
         assert response.city.code == "KTYS"
+        assert response.aircraft.registration_number == "N12345"
         assert response.item_count == 0
 
     def test_work_order_list_response(self):

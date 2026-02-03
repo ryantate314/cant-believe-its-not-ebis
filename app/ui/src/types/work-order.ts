@@ -25,6 +25,15 @@ export interface CityListResponse {
   total: number;
 }
 
+export interface AircraftBrief {
+  id: string;
+  registration_number: string;
+  serial_number: string | null;
+  make: string | null;
+  model: string | null;
+  year_built: number | null;
+}
+
 export interface WorkOrder {
   id: string;
   work_order_number: string;
@@ -34,16 +43,10 @@ export interface WorkOrder {
     code: string;
     name: string;
   };
+  aircraft: AircraftBrief;
   work_order_type: WorkOrderType;
   status: WorkOrderStatus;
   status_notes: string | null;
-
-  // Aircraft
-  aircraft_registration: string | null;
-  aircraft_serial: string | null;
-  aircraft_make: string | null;
-  aircraft_model: string | null;
-  aircraft_year: number | null;
 
   // Customer
   customer_name: string | null;
@@ -78,15 +81,11 @@ export interface WorkOrderListResponse {
 
 export interface WorkOrderCreateInput {
   city_id: string;
+  aircraft_id: string;
   created_by: string;
   work_order_type?: WorkOrderType;
   status?: WorkOrderStatus;
   status_notes?: string;
-  aircraft_registration?: string;
-  aircraft_serial?: string;
-  aircraft_make?: string;
-  aircraft_model?: string;
-  aircraft_year?: number;
   customer_name?: string;
   customer_po_number?: string;
   due_date?: string;
@@ -99,11 +98,7 @@ export interface WorkOrderUpdateInput {
   work_order_type?: WorkOrderType;
   status?: WorkOrderStatus;
   status_notes?: string;
-  aircraft_registration?: string;
-  aircraft_serial?: string;
-  aircraft_make?: string;
-  aircraft_model?: string;
-  aircraft_year?: number;
+  aircraft_id?: string;
   customer_name?: string;
   customer_po_number?: string;
   due_date?: string;

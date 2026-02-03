@@ -36,13 +36,6 @@ class WorkOrderBase(BaseModel):
     status: WorkOrderStatus = WorkOrderStatus.CREATED
     status_notes: str | None = None
 
-    # Aircraft
-    aircraft_registration: str | None = None
-    aircraft_serial: str | None = None
-    aircraft_make: str | None = None
-    aircraft_model: str | None = None
-    aircraft_year: int | None = None
-
     # Customer
     customer_name: str | None = None
     customer_po_number: str | None = None
@@ -60,6 +53,7 @@ class WorkOrderCreate(WorkOrderBase):
     """Schema for creating a work order."""
 
     city_id: UUID
+    aircraft_id: UUID
     created_by: str
 
 
@@ -71,11 +65,7 @@ class WorkOrderUpdate(BaseModel):
     status_notes: str | None = None
 
     # Aircraft
-    aircraft_registration: str | None = None
-    aircraft_serial: str | None = None
-    aircraft_make: str | None = None
-    aircraft_model: str | None = None
-    aircraft_year: int | None = None
+    aircraft_id: UUID | None = None
 
     # Customer
     customer_name: str | None = None
@@ -103,6 +93,20 @@ class CityBrief(BaseModel):
         from_attributes = True
 
 
+class AircraftBrief(BaseModel):
+    """Brief aircraft info for work order response."""
+
+    id: UUID
+    registration_number: str
+    serial_number: str | None
+    make: str | None
+    model: str | None
+    year_built: int | None
+
+    class Config:
+        from_attributes = True
+
+
 class WorkOrderResponse(BaseModel):
     """Response schema for a work order."""
 
@@ -110,16 +114,10 @@ class WorkOrderResponse(BaseModel):
     work_order_number: str
     sequence_number: int
     city: CityBrief
+    aircraft: AircraftBrief
     work_order_type: WorkOrderType
     status: WorkOrderStatus
     status_notes: str | None
-
-    # Aircraft
-    aircraft_registration: str | None
-    aircraft_serial: str | None
-    aircraft_make: str | None
-    aircraft_model: str | None
-    aircraft_year: int | None
 
     # Customer
     customer_name: str | None

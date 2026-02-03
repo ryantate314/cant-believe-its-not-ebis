@@ -6,6 +6,7 @@ from datetime import datetime
 
 from models.work_order import WorkOrder
 from models.city import City
+from models.aircraft import Aircraft
 from schemas.work_order import WorkOrderCreate, WorkOrderUpdate
 from core.sorting import SortOrder
 
@@ -57,17 +58,21 @@ async def get_work_orders(
     # Build query
     query = (
         select(WorkOrder)
-        .options(selectinload(WorkOrder.city), selectinload(WorkOrder.items))
+        .options(
+            selectinload(WorkOrder.city),
+            selectinload(WorkOrder.aircraft),
+            selectinload(WorkOrder.items),
+        )
         .where(WorkOrder.city_id == city.id)
     )
 
     # Apply filters
     if search:
         search_filter = f"%{search}%"
-        query = query.where(
+        query = query.join(Aircraft).where(
             WorkOrder.work_order_number.ilike(search_filter)
             | WorkOrder.customer_name.ilike(search_filter)
-            | WorkOrder.aircraft_registration.ilike(search_filter)
+            | Aircraft.registration_number.ilike(search_filter)
         )
 
     if status:
@@ -77,10 +82,10 @@ async def get_work_orders(
     count_query = select(func.count(WorkOrder.id)).where(WorkOrder.city_id == city.id)
     if search:
         search_filter = f"%{search}%"
-        count_query = count_query.where(
+        count_query = count_query.join(Aircraft).where(
             WorkOrder.work_order_number.ilike(search_filter)
             | WorkOrder.customer_name.ilike(search_filter)
-            | WorkOrder.aircraft_registration.ilike(search_filter)
+            | Aircraft.registration_number.ilike(search_filter)
         )
     if status:
         count_query = count_query.where(WorkOrder.status == status)
@@ -108,7 +113,11 @@ async def get_work_order_by_uuid(db: AsyncSession, wo_uuid: UUID) -> WorkOrder |
     """Get a work order by its UUID."""
     query = (
         select(WorkOrder)
-        .options(selectinload(WorkOrder.city), selectinload(WorkOrder.items))
+        .options(
+            selectinload(WorkOrder.city),
+            selectinload(WorkOrder.aircraft),
+            selectinload(WorkOrder.items),
+        )
         .where(WorkOrder.uuid == wo_uuid)
     )
     result = await db.execute(query)
@@ -126,6 +135,13 @@ async def create_work_order(
     if not city:
         raise ValueError(f"City not found: {work_order_in.city_id}")
 
+    # Get aircraft
+    aircraft_query = select(Aircraft).where(Aircraft.uuid == work_order_in.aircraft_id)
+    aircraft_result = await db.execute(aircraft_query)
+    aircraft = aircraft_result.scalar_one_or_none()
+    if not aircraft:
+        raise ValueError(f"Aircraft not found: {work_order_in.aircraft_id}")
+
     # Get next sequence number
     sequence = await get_next_sequence_number(db, city.id)
 
@@ -137,14 +153,10 @@ async def create_work_order(
         work_order_number=wo_number,
         sequence_number=sequence,
         city_id=city.id,
+        aircraft_id=aircraft.id,
         work_order_type=work_order_in.work_order_type,
         status=work_order_in.status,
         status_notes=work_order_in.status_notes,
-        aircraft_registration=work_order_in.aircraft_registration,
-        aircraft_serial=work_order_in.aircraft_serial,
-        aircraft_make=work_order_in.aircraft_make,
-        aircraft_model=work_order_in.aircraft_model,
-        aircraft_year=work_order_in.aircraft_year,
         customer_name=work_order_in.customer_name,
         customer_po_number=work_order_in.customer_po_number,
         due_date=work_order_in.due_date,
@@ -156,7 +168,7 @@ async def create_work_order(
 
     db.add(work_order)
     await db.flush()
-    await db.refresh(work_order, ["city", "items"])
+    await db.refresh(work_order, ["city", "aircraft", "items"])
     return work_order
 
 
@@ -170,12 +182,24 @@ async def update_work_order(
 
     # Update fields
     update_data = work_order_in.model_dump(exclude_unset=True)
+
+    # Handle aircraft_id UUID resolution
+    if "aircraft_id" in update_data:
+        aircraft_uuid = update_data.pop("aircraft_id")
+        if aircraft_uuid:
+            aircraft_query = select(Aircraft).where(Aircraft.uuid == aircraft_uuid)
+            aircraft_result = await db.execute(aircraft_query)
+            aircraft = aircraft_result.scalar_one_or_none()
+            if not aircraft:
+                raise ValueError(f"Aircraft not found: {aircraft_uuid}")
+            update_data["aircraft_id"] = aircraft.id
+
     for field, value in update_data.items():
         setattr(work_order, field, value)
 
     work_order.updated_at = datetime.utcnow()
     await db.flush()
-    await db.refresh(work_order, ["city", "items"])
+    await db.refresh(work_order, ["city", "aircraft", "items"])
     return work_order
 
 

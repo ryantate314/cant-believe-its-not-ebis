@@ -5,6 +5,7 @@ from uuid import uuid4
 from httpx import AsyncClient
 
 from models.city import City
+from models.aircraft import Aircraft
 from models.work_order import WorkOrder, WorkOrderStatus, PriorityLevel
 
 
@@ -102,11 +103,12 @@ class TestCreateWorkOrder:
     """Tests for POST /api/v1/work-orders endpoint."""
 
     async def test_create_work_order_minimal(
-        self, client: AsyncClient, test_city: City
+        self, client: AsyncClient, test_city: City, test_aircraft: Aircraft
     ):
         """Test creating a work order with minimal required fields."""
         payload = {
             "city_id": str(test_city.uuid),
+            "aircraft_id": str(test_aircraft.uuid),
             "created_by": "test_user",
         }
         response = await client.post("/api/v1/work-orders", json=payload)
@@ -116,26 +118,23 @@ class TestCreateWorkOrder:
         assert "work_order_number" in data
         assert data["work_order_number"].startswith(test_city.code)
         assert data["city"]["code"] == test_city.code
+        assert data["aircraft"]["registration_number"] == test_aircraft.registration_number
         assert data["status"] == "created"
         assert data["priority"] == "normal"
         assert data["created_by"] == "test_user"
         assert data["item_count"] == 0
 
     async def test_create_work_order_full(
-        self, client: AsyncClient, test_city: City
+        self, client: AsyncClient, test_city: City, test_aircraft: Aircraft
     ):
         """Test creating a work order with all fields."""
         payload = {
             "city_id": str(test_city.uuid),
+            "aircraft_id": str(test_aircraft.uuid),
             "created_by": "admin_user",
             "work_order_type": "quote",
             "status": "open",
             "status_notes": "Ready for review",
-            "aircraft_registration": "N67890",
-            "aircraft_serial": "SN67890",
-            "aircraft_make": "Piper",
-            "aircraft_model": "Cherokee",
-            "aircraft_year": 2018,
             "customer_name": "Acme Aviation",
             "customer_po_number": "PO-999",
             "due_date": "2026-12-31",
@@ -149,15 +148,32 @@ class TestCreateWorkOrder:
         data = response.json()
         assert data["work_order_type"] == "quote"
         assert data["status"] == "open"
-        assert data["aircraft_registration"] == "N67890"
+        assert data["aircraft"]["registration_number"] == test_aircraft.registration_number
         assert data["customer_name"] == "Acme Aviation"
         assert data["priority"] == "high"
 
-    async def test_create_work_order_invalid_city(self, client: AsyncClient):
+    async def test_create_work_order_invalid_city(
+        self, client: AsyncClient, test_aircraft: Aircraft
+    ):
         """Test creating a work order with non-existent city returns error."""
         fake_id = uuid4()
         payload = {
             "city_id": str(fake_id),
+            "aircraft_id": str(test_aircraft.uuid),
+            "created_by": "test_user",
+        }
+        response = await client.post("/api/v1/work-orders", json=payload)
+        assert response.status_code == 400
+        assert "not found" in response.json()["detail"].lower()
+
+    async def test_create_work_order_invalid_aircraft(
+        self, client: AsyncClient, test_city: City
+    ):
+        """Test creating a work order with non-existent aircraft returns error."""
+        fake_id = uuid4()
+        payload = {
+            "city_id": str(test_city.uuid),
+            "aircraft_id": str(fake_id),
             "created_by": "test_user",
         }
         response = await client.post("/api/v1/work-orders", json=payload)
@@ -165,11 +181,12 @@ class TestCreateWorkOrder:
         assert "not found" in response.json()["detail"].lower()
 
     async def test_create_work_order_sequence_increments(
-        self, client: AsyncClient, test_city: City
+        self, client: AsyncClient, test_city: City, test_aircraft: Aircraft
     ):
         """Test that work order sequence increments for same city."""
         payload = {
             "city_id": str(test_city.uuid),
+            "aircraft_id": str(test_aircraft.uuid),
             "created_by": "test_user",
         }
 
@@ -190,7 +207,7 @@ class TestGetWorkOrder:
     """Tests for GET /api/v1/work-orders/{work_order_id} endpoint."""
 
     async def test_get_work_order_by_id(
-        self, client: AsyncClient, test_work_order: WorkOrder
+        self, client: AsyncClient, test_work_order: WorkOrder, test_aircraft: Aircraft
     ):
         """Test getting a specific work order by ID."""
         response = await client.get(
@@ -200,7 +217,7 @@ class TestGetWorkOrder:
 
         data = response.json()
         assert data["work_order_number"] == test_work_order.work_order_number
-        assert data["aircraft_registration"] == test_work_order.aircraft_registration
+        assert data["aircraft"]["registration_number"] == test_aircraft.registration_number
 
     async def test_get_work_order_not_found(self, client: AsyncClient):
         """Test getting a non-existent work order returns 404."""
@@ -223,14 +240,10 @@ class TestGetWorkOrder:
             "work_order_number",
             "sequence_number",
             "city",
+            "aircraft",
             "work_order_type",
             "status",
             "status_notes",
-            "aircraft_registration",
-            "aircraft_serial",
-            "aircraft_make",
-            "aircraft_model",
-            "aircraft_year",
             "customer_name",
             "customer_po_number",
             "due_date",
@@ -247,6 +260,18 @@ class TestGetWorkOrder:
         ]
         for field in expected_fields:
             assert field in data, f"Missing field: {field}"
+
+        # Check aircraft object has expected fields
+        aircraft_fields = [
+            "id",
+            "registration_number",
+            "serial_number",
+            "make",
+            "model",
+            "year_built",
+        ]
+        for field in aircraft_fields:
+            assert field in data["aircraft"], f"Missing aircraft field: {field}"
 
 
 class TestUpdateWorkOrder:
@@ -316,12 +341,13 @@ class TestDeleteWorkOrder:
     """Tests for DELETE /api/v1/work-orders/{work_order_id} endpoint."""
 
     async def test_delete_work_order(
-        self, client: AsyncClient, test_city: City
+        self, client: AsyncClient, test_city: City, test_aircraft: Aircraft
     ):
         """Test deleting a work order."""
         # First create a work order
         payload = {
             "city_id": str(test_city.uuid),
+            "aircraft_id": str(test_aircraft.uuid),
             "created_by": "test_user",
         }
         create_response = await client.post("/api/v1/work-orders", json=payload)

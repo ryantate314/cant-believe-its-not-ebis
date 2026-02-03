@@ -1,5 +1,6 @@
-import type { City, WorkOrder } from "@/types/work-order";
+import type { City, WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
+import type { Aircraft } from "@/types/aircraft";
 
 export const mockCities: City[] = [
   {
@@ -16,6 +17,64 @@ export const mockCities: City[] = [
   },
 ];
 
+export const mockAircraftBrief: AircraftBrief = {
+  id: "aircraft-uuid-1",
+  registration_number: "N12345",
+  serial_number: "SN12345",
+  make: "Cessna",
+  model: "172",
+  year_built: 2020,
+};
+
+export const mockAircraft: Aircraft[] = [
+  {
+    id: "aircraft-uuid-1",
+    registration_number: "N12345",
+    serial_number: "SN12345",
+    make: "Cessna",
+    model: "172",
+    year_built: 2020,
+    meter_profile: null,
+    primary_city: {
+      id: "city-uuid-1",
+      code: "KTYS",
+      name: "Knoxville McGhee Tyson",
+    },
+    customer_name: "Test Customer",
+    aircraft_class: null,
+    fuel_code: null,
+    notes: null,
+    is_active: true,
+    created_by: "test_user",
+    updated_by: null,
+    created_at: "2026-01-15T10:00:00Z",
+    updated_at: "2026-01-15T10:00:00Z",
+  },
+  {
+    id: "aircraft-uuid-2",
+    registration_number: "N67890",
+    serial_number: "SN67890",
+    make: "Piper",
+    model: "Cherokee",
+    year_built: 2018,
+    meter_profile: null,
+    primary_city: {
+      id: "city-uuid-1",
+      code: "KTYS",
+      name: "Knoxville McGhee Tyson",
+    },
+    customer_name: "Another Customer",
+    aircraft_class: null,
+    fuel_code: null,
+    notes: null,
+    is_active: true,
+    created_by: "test_user",
+    updated_by: null,
+    created_at: "2026-01-15T10:00:00Z",
+    updated_at: "2026-01-15T10:00:00Z",
+  },
+];
+
 export const mockWorkOrder: WorkOrder = {
   id: "wo-uuid-1",
   work_order_number: "KTYS00001-01-2026",
@@ -25,14 +84,10 @@ export const mockWorkOrder: WorkOrder = {
     code: "KTYS",
     name: "Knoxville McGhee Tyson",
   },
+  aircraft: mockAircraftBrief,
   work_order_type: "work_order",
   status: "created",
   status_notes: null,
-  aircraft_registration: "N12345",
-  aircraft_serial: "SN12345",
-  aircraft_make: "Cessna",
-  aircraft_model: "172",
-  aircraft_year: 2020,
   customer_name: "Test Customer",
   customer_po_number: "PO-001",
   due_date: "2026-12-31",

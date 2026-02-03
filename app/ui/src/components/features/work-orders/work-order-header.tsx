@@ -79,9 +79,7 @@ export function WorkOrderHeader({
             {workOrder.customer_name && (
               <span>Customer: {workOrder.customer_name}</span>
             )}
-            {workOrder.aircraft_registration && (
-              <span>Aircraft: {workOrder.aircraft_registration}</span>
-            )}
+            <span>Aircraft: {workOrder.aircraft.registration_number}</span>
             <span>Items: {workOrder.item_count}</span>
           </div>
         </div>

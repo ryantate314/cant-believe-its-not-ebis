@@ -129,6 +129,9 @@ async def delete_existing_aircraft(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete an aircraft."""
-    deleted = await delete_aircraft(db, aircraft_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Aircraft not found")
+    try:
+        deleted = await delete_aircraft(db, aircraft_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Aircraft not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
