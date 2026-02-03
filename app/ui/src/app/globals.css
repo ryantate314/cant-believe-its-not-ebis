@@ -123,3 +123,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Sidebar positioning - use absolute instead of fixed */
+[data-slot="sidebar-container"] {
+  position: absolute !important;
+  top: 0 !important;
+  height: 100% !important;
+}
