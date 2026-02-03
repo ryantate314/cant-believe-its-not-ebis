@@ -28,6 +28,12 @@ from schemas.labor_kit_item import (
     LaborKitItemResponse,
     LaborKitItemListResponse,
 )
+from schemas.aircraft import (
+    AircraftCreate,
+    AircraftUpdate,
+    AircraftResponse,
+    AircraftListResponse,
+)
 
 __all__ = [
     "CityResponse",
@@ -53,4 +59,8 @@ __all__ = [
     "LaborKitItemUpdate",
     "LaborKitItemResponse",
     "LaborKitItemListResponse",
+    "AircraftCreate",
+    "AircraftUpdate",
+    "AircraftResponse",
+    "AircraftListResponse",
 ]

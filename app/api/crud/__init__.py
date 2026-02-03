@@ -28,6 +28,13 @@ from crud.labor_kit_item import (
     update_labor_kit_item,
     delete_labor_kit_item,
 )
+from crud.aircraft import (
+    get_aircraft_list,
+    get_aircraft_by_uuid,
+    create_aircraft,
+    update_aircraft,
+    delete_aircraft,
+)
 
 __all__ = [
     "get_cities",
@@ -53,4 +60,9 @@ __all__ = [
     "create_labor_kit_item",
     "update_labor_kit_item",
     "delete_labor_kit_item",
+    "get_aircraft_list",
+    "get_aircraft_by_uuid",
+    "create_aircraft",
+    "update_aircraft",
+    "delete_aircraft",
 ]
