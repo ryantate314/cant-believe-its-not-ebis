@@ -32,7 +32,7 @@ export function Navbar() {
 
           {/* Settings button */}
           <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/settings">
+            <Link href="/admin">
               <Settings className="size-5" />
               <span className="sr-only">Settings</span>
             </Link>

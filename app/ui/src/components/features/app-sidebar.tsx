@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  ClipboardList,
-  Package,
-  Settings,
-} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import {
   Sidebar,
@@ -21,30 +16,17 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-  {
-    label: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Work Orders",
-    href: "/workorder",
-    icon: ClipboardList,
-  },
-  {
-    label: "Labor Kits",
-    href: "/laborkit",
-    icon: Package,
-  },
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
-];
+export interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  navItems: NavItem[];
+}
+
+export function AppSidebar({ navItems }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (

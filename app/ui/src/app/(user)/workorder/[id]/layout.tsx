@@ -37,7 +37,7 @@ export default function WorkOrderLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col">
         <div className="border-b bg-white px-6 py-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="mt-2 h-4 w-96" />
@@ -60,7 +60,7 @@ export default function WorkOrderLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-1 flex-col">
       <WorkOrderHeader workOrder={workOrder} onStatusChange={handleStatusChange} />
       <div className="flex flex-1">
         <WorkOrderSidebar workOrderId={id} />
