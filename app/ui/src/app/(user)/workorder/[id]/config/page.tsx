@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { WorkOrderForm } from "@/components/features/work-orders";
-import { workOrdersApi } from "@/lib/api";
-import type { WorkOrder } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { WorkOrderForm } from "@/components/features/work-orders";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkOrder, mutateWorkOrder } from "@/hooks/use-work-order";
 
 interface ConfigPageProps {
   params: Promise<{ id: string }>;
@@ -14,18 +13,15 @@ interface ConfigPageProps {
 export default function ConfigPage({ params }: ConfigPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { workOrder, isLoading, error } = useWorkOrder(id);
 
   useEffect(() => {
-    workOrdersApi
-      .get(id)
-      .then(setWorkOrder)
-      .catch(() => router.push("/workorder"))
-      .finally(() => setLoading(false));
-  }, [id, router]);
+    if (error) {
+      router.push("/workorder");
+    }
+  }, [error, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -45,8 +41,7 @@ export default function ConfigPage({ params }: ConfigPageProps) {
         cityId={workOrder.city.id}
         workOrder={workOrder}
         onSuccess={(updated) => {
-          setWorkOrder(updated);
-          router.refresh();
+          mutateWorkOrder(id, updated);
         }}
       />
     </div>

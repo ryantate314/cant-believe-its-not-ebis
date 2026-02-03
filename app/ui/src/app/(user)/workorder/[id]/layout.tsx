@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { WorkOrderHeader, WorkOrderSidebar } from "@/components/features/work-orders";
-import { workOrdersApi } from "@/lib/api";
-import type { WorkOrder, WorkOrderStatus } from "@/types";
+import type { WorkOrderStatus } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkOrder, mutateWorkOrder } from "@/hooks/use-work-order";
 
 interface WorkOrderLayoutProps {
   children: React.ReactNode;
@@ -18,24 +18,21 @@ export default function WorkOrderLayout({
 }: WorkOrderLayoutProps) {
   const { id } = use(params);
   const router = useRouter();
-  const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { workOrder, isLoading, error } = useWorkOrder(id);
 
   useEffect(() => {
-    workOrdersApi
-      .get(id)
-      .then(setWorkOrder)
-      .catch(() => router.push("/workorder"))
-      .finally(() => setLoading(false));
-  }, [id, router]);
+    if (error) {
+      router.push("/workorder");
+    }
+  }, [error, router]);
 
   const handleStatusChange = (newStatus: WorkOrderStatus) => {
     if (workOrder) {
-      setWorkOrder({ ...workOrder, status: newStatus });
+      mutateWorkOrder(id, { ...workOrder, status: newStatus });
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-1 flex-col">
         <div className="border-b bg-white px-6 py-4">
