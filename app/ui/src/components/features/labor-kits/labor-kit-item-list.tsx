@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -10,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -30,40 +30,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { workOrderItemsApi, laborKitsApi } from "@/lib/api";
-import type { WorkOrderItem, WorkOrderItemStatus, SortState, LaborKit } from "@/types";
+import { Switch } from "@/components/ui/switch";
+import { laborKitsApi, laborKitItemsApi } from "@/lib/api";
+import type { LaborKit, LaborKitItem, SortState } from "@/types";
 
-const STATUS_COLORS: Record<WorkOrderItemStatus, string> = {
-  open: "bg-green-100 text-green-800",
-  waiting_for_parts: "bg-orange-100 text-orange-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  tech_review: "bg-blue-100 text-blue-800",
-  admin_review: "bg-purple-100 text-purple-800",
-  finished: "bg-emerald-100 text-emerald-800",
-};
-
-const STATUS_LABELS: Record<WorkOrderItemStatus, string> = {
-  open: "Open",
-  waiting_for_parts: "Waiting for Parts",
-  in_progress: "In Progress",
-  tech_review: "Tech Review",
-  admin_review: "Admin Review",
-  finished: "Finished",
-};
-
-interface WorkOrderItemListProps {
-  workOrderId: string;
+interface LaborKitItemListProps {
+  kitId: string;
 }
 
-export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
-  const [items, setItems] = useState<WorkOrderItem[]>([]);
+export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
+  const [kit, setKit] = useState<LaborKit | null>(null);
+  const [items, setItems] = useState<LaborKitItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [applyKitDialogOpen, setApplyKitDialogOpen] = useState(false);
-  const [laborKits, setLaborKits] = useState<LaborKit[]>([]);
-  const [selectedKitId, setSelectedKitId] = useState<string>("");
-  const [applyingKit, setApplyingKit] = useState(false);
-  const [editingItem, setEditingItem] = useState<WorkOrderItem | null>(null);
+  const [editingItem, setEditingItem] = useState<LaborKitItem | null>(null);
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "item_number",
     sortOrder: "asc",
@@ -73,29 +53,36 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
     corrective_action: "",
     notes: "",
     category: "",
+    sub_category: "",
     ata_code: "",
     hours_estimate: "",
+    billing_method: "hourly",
+    flat_rate: "",
     department: "",
-    status: "open" as WorkOrderItemStatus,
+    do_not_bill: false,
+    enable_rii: false,
   });
 
-  const fetchItems = useCallback(async () => {
-    console.log("Fetching items with sort:", sortState);
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await workOrderItemsApi.list(workOrderId, {
-        sort_by: sortState.sortBy || undefined,
-        sort_order: sortState.sortOrder,
-      });
-      setItems(data.items);
+      const [kitData, itemsData] = await Promise.all([
+        laborKitsApi.get(kitId),
+        laborKitItemsApi.list(kitId, {
+          sort_by: sortState.sortBy || undefined,
+          sort_order: sortState.sortOrder,
+        }),
+      ]);
+      setKit(kitData);
+      setItems(itemsData.items);
     } finally {
       setLoading(false);
     }
-  }, [workOrderId, sortState]);
+  }, [kitId, sortState]);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchData();
+  }, [fetchData]);
 
   const handleSort = (column: string) => {
     setSortState((prev) => ({
@@ -111,25 +98,33 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
       corrective_action: "",
       notes: "",
       category: "",
+      sub_category: "",
       ata_code: "",
       hours_estimate: "",
+      billing_method: "hourly",
+      flat_rate: "",
       department: "",
-      status: "open",
+      do_not_bill: false,
+      enable_rii: false,
     });
     setEditingItem(null);
   };
 
-  const openEditDialog = (item: WorkOrderItem) => {
+  const openEditDialog = (item: LaborKitItem) => {
     setEditingItem(item);
     setFormData({
       discrepancy: item.discrepancy || "",
       corrective_action: item.corrective_action || "",
       notes: item.notes || "",
       category: item.category || "",
+      sub_category: item.sub_category || "",
       ata_code: item.ata_code || "",
       hours_estimate: item.hours_estimate?.toString() || "",
+      billing_method: item.billing_method || "hourly",
+      flat_rate: item.flat_rate?.toString() || "",
       department: item.department || "",
-      status: item.status,
+      do_not_bill: item.do_not_bill,
+      enable_rii: item.enable_rii,
     });
     setDialogOpen(true);
   };
@@ -142,23 +137,26 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
       hours_estimate: formData.hours_estimate
         ? parseFloat(formData.hours_estimate)
         : undefined,
+      flat_rate: formData.flat_rate
+        ? parseFloat(formData.flat_rate)
+        : undefined,
     };
 
     try {
       if (editingItem) {
-        await workOrderItemsApi.update(workOrderId, editingItem.id, {
+        await laborKitItemsApi.update(kitId, editingItem.id, {
           ...data,
           updated_by: "system",
         });
       } else {
-        await workOrderItemsApi.create(workOrderId, {
+        await laborKitItemsApi.create(kitId, {
           ...data,
           created_by: "system",
         });
       }
       setDialogOpen(false);
       resetForm();
-      fetchItems();
+      fetchData();
     } catch (error) {
       console.error("Failed to save item:", error);
     }
@@ -168,61 +166,72 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
     try {
-      await workOrderItemsApi.delete(workOrderId, itemId);
-      fetchItems();
+      await laborKitItemsApi.delete(kitId, itemId);
+      fetchData();
     } catch (error) {
       console.error("Failed to delete item:", error);
     }
   };
 
-  const openApplyKitDialog = async () => {
-    try {
-      const data = await laborKitsApi.list({ active_only: true });
-      setLaborKits(data.items);
-      setSelectedKitId("");
-      setApplyKitDialogOpen(true);
-    } catch (error) {
-      console.error("Failed to fetch labor kits:", error);
-    }
-  };
+  if (loading && !kit) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="space-y-2">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  const handleApplyKit = async () => {
-    if (!selectedKitId) return;
-
-    setApplyingKit(true);
-    try {
-      const result = await laborKitsApi.apply(selectedKitId, workOrderId, "system");
-      setApplyKitDialogOpen(false);
-      setSelectedKitId("");
-      fetchItems();
-      alert(`Successfully added ${result.items_created} items from the labor kit.`);
-    } catch (error) {
-      console.error("Failed to apply labor kit:", error);
-      alert("Failed to apply labor kit. Please try again.");
-    } finally {
-      setApplyingKit(false);
-    }
-  };
+  if (!kit) {
+    return (
+      <div className="rounded-lg border p-8 text-center text-muted-foreground">
+        Labor kit not found.{" "}
+        <Link href="/laborkit" className="text-primary underline">
+          Return to list
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Work Order Items</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={openApplyKitDialog}>
-            Apply Labor Kit
+      <div className="flex items-center gap-4">
+        <Link href="/laborkit">
+          <Button variant="ghost" size="sm">
+            &larr; Back to list
           </Button>
-          <Dialog
-            open={dialogOpen}
-            onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) resetForm();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>Add Item</Button>
-            </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+        </Link>
+      </div>
+
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold">{kit.name}</h1>
+        {kit.description && (
+          <p className="text-muted-foreground">{kit.description}</p>
+        )}
+        <div className="flex gap-2 text-sm text-muted-foreground">
+          {kit.category && <span>Category: {kit.category}</span>}
+          <span>|</span>
+          <span>{kit.is_active ? "Active" : "Inactive"}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Template Items</h2>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button>Add Item</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingItem ? "Edit Item" : "Add New Item"}
@@ -230,30 +239,6 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(v) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        status: v as WorkOrderItemStatus,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
                   <Input
@@ -263,6 +248,20 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                       setFormData((prev) => ({
                         ...prev,
                         category: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sub_category">Sub Category</Label>
+                  <Input
+                    id="sub_category"
+                    value={formData.sub_category}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        sub_category: e.target.value,
                       }))
                     }
                   />
@@ -283,6 +282,38 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Input
+                    id="department"
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        department: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="billing_method">Billing Method</Label>
+                  <Select
+                    value={formData.billing_method}
+                    onValueChange={(v) =>
+                      setFormData((prev) => ({ ...prev, billing_method: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hourly">Hourly</SelectItem>
+                      <SelectItem value="flat_rate">Flat Rate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="hours_estimate">Hours Estimate</Label>
                   <Input
                     id="hours_estimate"
@@ -299,16 +330,19 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
+                  <Label htmlFor="flat_rate">Flat Rate ($)</Label>
                   <Input
-                    id="department"
-                    value={formData.department}
+                    id="flat_rate"
+                    type="number"
+                    step="0.01"
+                    value={formData.flat_rate}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        department: e.target.value,
+                        flat_rate: e.target.value,
                       }))
                     }
+                    disabled={formData.billing_method !== "flat_rate"}
                   />
                 </div>
               </div>
@@ -355,6 +389,30 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 />
               </div>
 
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="do_not_bill"
+                    checked={formData.do_not_bill}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, do_not_bill: checked }))
+                    }
+                  />
+                  <Label htmlFor="do_not_bill">Do Not Bill</Label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="enable_rii"
+                    checked={formData.enable_rii}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, enable_rii: checked }))
+                    }
+                  />
+                  <Label htmlFor="enable_rii">Enable RII</Label>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button
                   type="button"
@@ -368,60 +426,6 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 </Button>
               </div>
             </form>
-          </DialogContent>
-        </Dialog>
-        </div>
-
-        {/* Apply Labor Kit Dialog */}
-        <Dialog open={applyKitDialogOpen} onOpenChange={setApplyKitDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Apply Labor Kit</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select a labor kit to apply its template items to this work order.
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="labor-kit">Labor Kit</Label>
-                <Select
-                  value={selectedKitId}
-                  onValueChange={setSelectedKitId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a labor kit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {laborKits.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        No labor kits available
-                      </SelectItem>
-                    ) : (
-                      laborKits.map((kit) => (
-                        <SelectItem key={kit.id} value={kit.id}>
-                          {kit.name}
-                          {kit.category && ` (${kit.category})`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setApplyKitDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleApplyKit}
-                  disabled={!selectedKitId || applyingKit}
-                >
-                  {applyingKit ? "Applying..." : "Apply Kit"}
-                </Button>
-              </div>
-            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -459,14 +463,7 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 >
                   Category
                 </SortableTableHead>
-                <SortableTableHead
-                  sortable
-                  sortKey="status"
-                  sortState={sortState}
-                  onSort={handleSort}
-                >
-                  Status
-                </SortableTableHead>
+                <TableHead>ATA</TableHead>
                 <SortableTableHead
                   sortable
                   sortKey="hours_estimate"
@@ -475,6 +472,7 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 >
                   Hours
                 </SortableTableHead>
+                <TableHead>Billing</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -488,15 +486,11 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                     {item.discrepancy || "-"}
                   </TableCell>
                   <TableCell>{item.category || "-"}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={STATUS_COLORS[item.status]}
-                    >
-                      {STATUS_LABELS[item.status]}
-                    </Badge>
-                  </TableCell>
+                  <TableCell>{item.ata_code || "-"}</TableCell>
                   <TableCell>{item.hours_estimate || "-"}</TableCell>
+                  <TableCell className="capitalize">
+                    {item.billing_method.replace("_", " ")}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button

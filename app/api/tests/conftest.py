@@ -15,6 +15,8 @@ from main import app
 from models.city import City
 from models.work_order import WorkOrder, WorkOrderStatus, PriorityLevel, WorkOrderType
 from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
+from models.labor_kit import LaborKit
+from models.labor_kit_item import LaborKitItem
 
 
 # Use in-memory SQLite for tests
@@ -155,3 +157,115 @@ async def test_work_order_item(
     await test_session.commit()
     await test_session.refresh(item)
     return item
+
+
+@pytest.fixture
+async def test_labor_kit(test_session: AsyncSession) -> LaborKit:
+    """Create a test labor kit."""
+    kit = LaborKit(
+        uuid=uuid4(),
+        name="100 Hour Service",
+        description="Standard 100 hour inspection for Continental engines",
+        category="Engine",
+        is_active=True,
+        created_by="test_user",
+    )
+    test_session.add(kit)
+    await test_session.commit()
+    await test_session.refresh(kit)
+    return kit
+
+
+@pytest.fixture
+async def test_labor_kit_inactive(test_session: AsyncSession) -> LaborKit:
+    """Create an inactive test labor kit."""
+    kit = LaborKit(
+        uuid=uuid4(),
+        name="Inactive Kit",
+        description="An inactive labor kit",
+        category="Engine",
+        is_active=False,
+        created_by="test_user",
+    )
+    test_session.add(kit)
+    await test_session.commit()
+    await test_session.refresh(kit)
+    return kit
+
+
+@pytest.fixture
+async def test_labor_kit_item(
+    test_session: AsyncSession, test_labor_kit: LaborKit
+) -> LaborKitItem:
+    """Create a test labor kit item."""
+    item = LaborKitItem(
+        uuid=uuid4(),
+        labor_kit_id=test_labor_kit.id,
+        item_number=1,
+        discrepancy="Oil filter replacement",
+        corrective_action="Replace oil filter per manufacturer specifications",
+        notes="Use approved oil filter part",
+        category="Maintenance",
+        sub_category="Routine",
+        ata_code="72-00",
+        hours_estimate=1.0,
+        billing_method="hourly",
+        department="Engine",
+        do_not_bill=False,
+        enable_rii=False,
+        created_by="test_user",
+    )
+    test_session.add(item)
+    await test_session.commit()
+    await test_session.refresh(item)
+    return item
+
+
+@pytest.fixture
+async def test_labor_kit_with_items(
+    test_session: AsyncSession, test_labor_kit: LaborKit
+) -> LaborKit:
+    """Create a test labor kit with multiple items."""
+    items = [
+        LaborKitItem(
+            uuid=uuid4(),
+            labor_kit_id=test_labor_kit.id,
+            item_number=1,
+            discrepancy="Oil filter replacement",
+            corrective_action="Replace oil filter",
+            category="Maintenance",
+            hours_estimate=1.0,
+            billing_method="hourly",
+            department="Engine",
+            created_by="test_user",
+        ),
+        LaborKitItem(
+            uuid=uuid4(),
+            labor_kit_id=test_labor_kit.id,
+            item_number=2,
+            discrepancy="Spark plug inspection",
+            corrective_action="Inspect and clean spark plugs",
+            category="Maintenance",
+            hours_estimate=2.0,
+            billing_method="hourly",
+            department="Engine",
+            created_by="test_user",
+        ),
+        LaborKitItem(
+            uuid=uuid4(),
+            labor_kit_id=test_labor_kit.id,
+            item_number=3,
+            discrepancy="Oil change",
+            corrective_action="Drain and refill oil",
+            category="Maintenance",
+            hours_estimate=0.5,
+            billing_method="hourly",
+            department="Engine",
+            created_by="test_user",
+        ),
+    ]
+    for item in items:
+        test_session.add(item)
+    await test_session.commit()
+    await test_session.refresh(test_labor_kit)
+    return test_labor_kit
