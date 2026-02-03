@@ -82,6 +82,7 @@ infrastructure/   # Terraform Azure configuration
 
 ## Frontend Development Conventions
 
+- **Mobile-first design:** Build UI mobile-first with responsive breakpoints for tablets and desktops; ensure all features are usable on touch devices
 - **Component Library:** Use [shadcn/ui](https://ui.shadcn.com/) as the foundation for UI components
 - **Adding components:** Always use the CLI (`npx shadcn@latest add <component>`) to add new shadcn/ui components—do not manually create or copy component files
 - **Prefer reuse:** Before creating new UI elements, check for existing components that can be extended or composed
