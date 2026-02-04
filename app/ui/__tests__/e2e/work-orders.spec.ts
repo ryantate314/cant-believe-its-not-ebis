@@ -81,7 +81,7 @@ test.describe("Work Orders E2E", () => {
   });
 
   test.describe("Work Order Detail", () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async () => {
       // This requires a valid work order ID - skip if backend unavailable
       test.skip(true, "Requires backend to be running with test data");
     });

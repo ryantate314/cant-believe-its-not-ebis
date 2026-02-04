@@ -25,13 +25,21 @@ import { aircraftApi, citiesApi } from "@/lib/api";
 import { useSortParams } from "@/hooks/use-sort-params";
 import type { Aircraft, City } from "@/types";
 
+type FetchState = {
+  data: Aircraft[];
+  total: number;
+  fetchKey: string;
+};
+
 export function AircraftList() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [cities, setCities] = useState<City[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [fetchState, setFetchState] = useState<FetchState>({
+    data: [],
+    total: 0,
+    fetchKey: "",
+  });
 
   const cityId = searchParams.get("city") || "";
   const search = searchParams.get("search") || "";
@@ -41,12 +49,21 @@ export function AircraftList() {
     defaultSortOrder: "desc",
   });
 
+  // Create a unique key for the current fetch params
+  const currentFetchKey = `${cityId}-${search}-${page}-${sortBy}-${sortOrder}`;
+
+  // Derive loading state: loading if key doesn't match
+  const loading = fetchState.fetchKey !== currentFetchKey;
+  const aircraft = fetchState.data;
+  const total = fetchState.total;
+
   useEffect(() => {
     citiesApi.list().then((data) => setCities(data.items));
   }, []);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
+
     aircraftApi
       .list({
         page,
@@ -56,11 +73,27 @@ export function AircraftList() {
         sort_order: sortOrder,
       })
       .then((data) => {
-        setAircraft(data.items);
-        setTotal(data.total);
+        if (!cancelled) {
+          setFetchState({
+            data: data.items,
+            total: data.total,
+            fetchKey: currentFetchKey,
+          });
+        }
       })
-      .finally(() => setLoading(false));
-  }, [cityId, search, page, sortBy, sortOrder]);
+      .catch(() => {
+        if (!cancelled) {
+          setFetchState((prev) => ({
+            ...prev,
+            fetchKey: currentFetchKey,
+          }));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cityId, search, page, sortBy, sortOrder, currentFetchKey]);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());

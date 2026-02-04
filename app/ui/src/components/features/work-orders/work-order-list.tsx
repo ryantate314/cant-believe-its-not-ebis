@@ -25,13 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { workOrdersApi, citiesApi } from "@/lib/api";
 import { useSortParams } from "@/hooks/use-sort-params";
-import type {
-  WorkOrder,
-  WorkOrderStatus,
-  City,
-  WORK_ORDER_STATUS_LABELS,
-  PRIORITY_LABELS,
-} from "@/types";
+import type { WorkOrder, WorkOrderStatus, City } from "@/types";
 
 const STATUS_COLORS: Record<WorkOrderStatus, string> = {
   created: "bg-gray-100 text-gray-800",
@@ -57,13 +51,23 @@ const STATUS_LABELS: Record<WorkOrderStatus, string> = {
   void: "Void",
 };
 
+type FetchState = {
+  data: WorkOrder[];
+  total: number;
+  loading: boolean;
+  fetchKey: string;
+};
+
 export function WorkOrderList() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [cities, setCities] = useState<City[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [fetchState, setFetchState] = useState<FetchState>({
+    data: [],
+    total: 0,
+    loading: false,
+    fetchKey: "",
+  });
 
   const cityId = searchParams.get("city") || "";
   const search = searchParams.get("search") || "";
@@ -74,17 +78,27 @@ export function WorkOrderList() {
     defaultSortOrder: "desc",
   });
 
+  // Create a unique key for the current fetch params
+  const currentFetchKey = cityId
+    ? `${cityId}-${search}-${status}-${page}-${sortBy}-${sortOrder}`
+    : "";
+
+  // Derive loading state: loading if we have a cityId and key doesn't match
+  const loading = cityId ? fetchState.fetchKey !== currentFetchKey : false;
+  const workOrders = fetchState.data;
+  const total = fetchState.total;
+
   useEffect(() => {
     citiesApi.list().then((data) => setCities(data.items));
   }, []);
 
   useEffect(() => {
     if (!cityId) {
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
+    let cancelled = false;
+
     workOrdersApi
       .list({
         city_id: cityId,
@@ -95,11 +109,29 @@ export function WorkOrderList() {
         sort_order: sortOrder,
       })
       .then((data) => {
-        setWorkOrders(data.items);
-        setTotal(data.total);
+        if (!cancelled) {
+          setFetchState({
+            data: data.items,
+            total: data.total,
+            loading: false,
+            fetchKey: currentFetchKey,
+          });
+        }
       })
-      .finally(() => setLoading(false));
-  }, [cityId, search, status, page, sortBy, sortOrder]);
+      .catch(() => {
+        if (!cancelled) {
+          setFetchState((prev) => ({
+            ...prev,
+            loading: false,
+            fetchKey: currentFetchKey,
+          }));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cityId, search, status, page, sortBy, sortOrder, currentFetchKey]);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());

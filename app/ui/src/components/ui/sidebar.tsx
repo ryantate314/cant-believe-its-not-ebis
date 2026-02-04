@@ -642,6 +642,9 @@ function SidebarMenuBadge({
   )
 }
 
+// Counter for generating stable skeleton widths
+let skeletonCounter = 0
+
 function SidebarMenuSkeleton({
   className,
   showIcon = false,
@@ -649,9 +652,12 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean
 }) {
-  // Random width between 50 to 90%.
+  // Generate stable width based on counter (deterministic pattern 50-90%)
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
+    const index = skeletonCounter++
+    // Use a deterministic pattern based on index
+    const widthValue = 50 + ((index * 17) % 41)
+    return `${widthValue}%`
   }, [])
 
   return (

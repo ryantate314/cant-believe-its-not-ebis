@@ -13,6 +13,28 @@ interface SortableTableHeadProps
   onSort?: (column: string) => void;
 }
 
+function SortIcon({
+  sortable,
+  isActive,
+  sortOrder,
+}: {
+  sortable: boolean;
+  isActive: boolean;
+  sortOrder?: "asc" | "desc";
+}) {
+  if (!sortable) return null;
+
+  if (isActive) {
+    return sortOrder === "asc" ? (
+      <ChevronUp className="ml-1 h-4 w-4" />
+    ) : (
+      <ChevronDown className="ml-1 h-4 w-4" />
+    );
+  }
+
+  return <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />;
+}
+
 function SortableTableHead({
   className,
   children,
@@ -30,20 +52,6 @@ function SortableTableHead({
     }
   };
 
-  const SortIcon = () => {
-    if (!sortable) return null;
-
-    if (isActive) {
-      return sortState?.sortOrder === "asc" ? (
-        <ChevronUp className="ml-1 h-4 w-4" />
-      ) : (
-        <ChevronDown className="ml-1 h-4 w-4" />
-      );
-    }
-
-    return <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />;
-  };
-
   return (
     <th
       data-slot="table-head"
@@ -57,7 +65,7 @@ function SortableTableHead({
     >
       <div className="flex items-center">
         {children}
-        <SortIcon />
+        <SortIcon sortable={sortable} isActive={isActive} sortOrder={sortState?.sortOrder} />
       </div>
     </th>
   );

@@ -2,10 +2,7 @@ import { http, HttpResponse } from "msw";
 import {
   mockCities,
   mockAircraft,
-  mockAircraftBrief,
-  mockWorkOrder,
   mockWorkOrders,
-  mockWorkOrderItem,
   mockWorkOrderItems,
 } from "./data";
 import type { WorkOrder, AircraftBrief } from "@/types/work-order";

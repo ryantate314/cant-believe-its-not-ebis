@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { citiesApi, workOrdersApi, workOrderItemsApi, ApiError } from "@/lib/api";
-import { mockCities, mockWorkOrder, mockWorkOrderItem } from "../../mocks/data";
 import { server } from "../../mocks/server";
 import { http, HttpResponse } from "msw";
 

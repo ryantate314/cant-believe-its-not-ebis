@@ -36,8 +36,6 @@ import type {
   WorkOrder,
   WorkOrderCreateInput,
   WorkOrderUpdateInput,
-  PriorityLevel,
-  WorkOrderType,
 } from "@/types";
 import type { Aircraft } from "@/types/aircraft";
 
