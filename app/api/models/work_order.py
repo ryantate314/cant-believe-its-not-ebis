@@ -36,18 +36,20 @@ class WorkOrder(Base, AuditableMixin):
 
     # Work order type and status (enums defined in V001 migration)
     work_order_type: Mapped[str] = mapped_column(
-        SQLEnum("work_order", "warranty_claim", name="work_order_type", create_type=False),
+        SQLEnum("work_order", "quote", name="work_order_type", create_type=False),
         server_default="work_order",
     )
     status: Mapped[str] = mapped_column(
         SQLEnum(
             "created",
             "scheduled",
+            "open",
             "in_progress",
-            "on_hold",
+            "tracking",
+            "pending",
+            "in_review",
             "completed",
-            "cancelled",
-            "invoiced",
+            "void",
             name="work_order_status",
             create_type=False,
         ),

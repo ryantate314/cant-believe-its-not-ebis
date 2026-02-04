@@ -3,6 +3,7 @@
 from core.audit import register_audit_listeners
 from models.audit_log import AuditLog
 from models.base import Base, TimestampMixin, UUIDMixin
+from models.city import City
 from models.work_order import WorkOrder
 
 
@@ -20,6 +21,7 @@ __all__ = [
     "TimestampMixin",
     "UUIDMixin",
     "AuditLog",
+    "City",
     "WorkOrder",
     "register_all_audit_listeners",
 ]

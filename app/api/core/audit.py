@@ -123,9 +123,9 @@ def _insert_audit_record(
                 (entity_type, entity_id, action, old_values, new_values,
                  changed_fields, user_id, session_id, ip_address)
             VALUES
-                (:entity_type, :entity_id, :action::audit_action,
-                 :old_values::jsonb, :new_values::jsonb, :changed_fields,
-                 :user_id, :session_id, :ip_address::inet)
+                (:entity_type, :entity_id, CAST(:action AS audit_action),
+                 CAST(:old_values AS jsonb), CAST(:new_values AS jsonb), :changed_fields,
+                 :user_id, :session_id, CAST(:ip_address AS inet))
         """),
         {
             "entity_type": entity_type,

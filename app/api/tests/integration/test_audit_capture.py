@@ -7,6 +7,7 @@ Skip these tests if DATABASE_URL is not configured or database is unavailable.
 import os
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select, text
 
 # Skip all tests in this module if database is not available
@@ -16,24 +17,30 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture(scope="module")
-def anyio_backend():
-    """Use asyncio for all async tests."""
-    return "asyncio"
-
-
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session():
     """Provide a database session for testing."""
-    from core.database import async_session_factory
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    from sqlalchemy.orm import sessionmaker
 
-    async with async_session_factory() as session:
+    database_url = os.environ.get("DATABASE_URL")
+    engine = create_async_engine(database_url, echo=False, pool_pre_ping=True)
+    _sync_session_class = sessionmaker(expire_on_commit=False)
+    session_factory = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        sync_session_class=_sync_session_class,
+    )
+
+    async with session_factory() as session:
         yield session
-        # Rollback any uncommitted changes
         await session.rollback()
 
+    await engine.dispose()
 
-@pytest.fixture(autouse=True)
+
+@pytest_asyncio.fixture(autouse=True)
 async def register_listeners():
     """Register audit listeners before tests."""
     from models import register_all_audit_listeners
@@ -42,33 +49,40 @@ async def register_listeners():
     yield
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_city(db_session):
     """Ensure a test city exists for foreign key constraints."""
     # Check if city with id=1 exists, create if not
     result = await db_session.execute(text("SELECT id FROM city WHERE id = 1"))
     if not result.scalar_one_or_none():
         await db_session.execute(
-            text(
-                "INSERT INTO city (id, code, name, timezone) VALUES (1, 'TST', 'Test City', 'UTC')"
-            )
+            text("INSERT INTO city (id, code, name) VALUES (1, 'TST', 'Test City')")
         )
         await db_session.commit()
     yield 1
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def cleanup_work_orders(db_session):
-    """Clean up test work orders after each test."""
+    """Clean up test work orders after each test.
+
+    Note: audit_log records cannot be deleted due to database immutability trigger.
+    We only clean up work_order records.
+    """
     yield
     # Delete test work orders (those with WO-TEST- prefix)
-    await db_session.execute(
-        text("DELETE FROM audit_log WHERE entity_type = 'work_order' AND entity_id IN (SELECT uuid FROM work_order WHERE work_order_number LIKE 'WO-TEST-%')")
-    )
-    await db_session.execute(
-        text("DELETE FROM work_order WHERE work_order_number LIKE 'WO-TEST-%'")
-    )
-    await db_session.commit()
+    # Note: audit_log records are immutable by design
+    try:
+        await db_session.rollback()
+    except Exception:
+        pass
+    try:
+        await db_session.execute(
+            text("DELETE FROM work_order WHERE work_order_number LIKE 'WO-TEST-%'")
+        )
+        await db_session.commit()
+    except Exception:
+        await db_session.rollback()
 
 
 @pytest.mark.asyncio
