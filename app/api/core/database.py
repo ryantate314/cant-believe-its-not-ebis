@@ -4,7 +4,7 @@ import os
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from core.config import get_settings
 
@@ -48,10 +48,8 @@ def _get_session_factory():
     return _async_session_factory
 
 
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy models."""
-    pass
-
+# Re-export Base from models.base for backwards compatibility
+from models.base import Base
 
 # Backwards-compatible aliases
 engine = property(lambda self: _get_engine())

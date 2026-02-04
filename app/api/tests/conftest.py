@@ -10,7 +10,8 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from core.database import Base, get_db
+from models.base import Base
+from core.database import get_db
 from main import app
 from models.city import City
 from models.aircraft import Aircraft
@@ -33,13 +34,22 @@ async def test_engine():
         poolclass=StaticPool,
     )
 
+    # Create tables excluding audit_log (uses PostgreSQL-specific types)
+    # Get tables to create, excluding audit_log
+    tables_to_create = [
+        table for table in Base.metadata.sorted_tables
+        if table.name != "audit_log"
+    ]
+
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        for table in tables_to_create:
+            await conn.run_sync(table.create, checkfirst=True)
 
     yield engine
 
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        for table in reversed(tables_to_create):
+            await conn.run_sync(table.drop, checkfirst=True)
 
     await engine.dispose()
 
