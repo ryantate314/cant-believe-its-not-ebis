@@ -41,7 +41,6 @@ export function LaborKitList() {
   const [kits, setKits] = useState<LaborKit[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingKit, setEditingKit] = useState<LaborKit | null>(null);
   const [showInactive, setShowInactive] = useState(false);
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "name",
@@ -87,51 +86,21 @@ export function LaborKitList() {
       category: "",
       is_active: true,
     });
-    setEditingKit(null);
-  };
-
-  const openEditDialog = (kit: LaborKit) => {
-    setEditingKit(kit);
-    setFormData({
-      name: kit.name,
-      description: kit.description || "",
-      category: kit.category || "",
-      is_active: kit.is_active,
-    });
-    setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      if (editingKit) {
-        await laborKitsApi.update(editingKit.id, {
-          ...formData,
-          updated_by: "system",
-        });
-      } else {
-        await laborKitsApi.create({
-          ...formData,
-          created_by: "system",
-        });
-      }
+      const newKit = await laborKitsApi.create({
+        ...formData,
+        created_by: "system",
+      });
       setDialogOpen(false);
       resetForm();
-      fetchKits();
+      router.push(`/admin/laborkit/${newKit.id}`);
     } catch (error) {
       console.error("Failed to save labor kit:", error);
-    }
-  };
-
-  const handleDelete = async (kitId: string) => {
-    if (!confirm("Are you sure you want to delete this labor kit?")) return;
-
-    try {
-      await laborKitsApi.delete(kitId);
-      fetchKits();
-    } catch (error) {
-      console.error("Failed to delete labor kit:", error);
     }
   };
 
@@ -151,9 +120,7 @@ export function LaborKitList() {
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>
-                {editingKit ? "Edit Labor Kit" : "New Labor Kit"}
-              </DialogTitle>
+              <DialogTitle>New Labor Kit</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -223,9 +190,7 @@ export function LaborKitList() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {editingKit ? "Update" : "Create"}
-                </Button>
+                <Button type="submit">Create</Button>
               </div>
             </form>
           </DialogContent>
@@ -289,7 +254,6 @@ export function LaborKitList() {
                 >
                   Created
                 </SortableTableHead>
-                <TableHead className="w-32">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -297,7 +261,7 @@ export function LaborKitList() {
                 <TableRow
                   key={kit.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => router.push(`/laborkit/${kit.id}`)}
+                  onClick={() => router.push(`/admin/laborkit/${kit.id}`)}
                 >
                   <TableCell className="font-medium">{kit.name}</TableCell>
                   <TableCell>{kit.category || "-"}</TableCell>
@@ -318,31 +282,6 @@ export function LaborKitList() {
                   </TableCell>
                   <TableCell>
                     {new Date(kit.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditDialog(kit);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(kit.id);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}

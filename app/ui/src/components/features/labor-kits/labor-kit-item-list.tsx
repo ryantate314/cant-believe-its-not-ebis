@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -31,15 +30,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { laborKitsApi, laborKitItemsApi } from "@/lib/api";
-import type { LaborKit, LaborKitItem, SortState } from "@/types";
+import { laborKitItemsApi } from "@/lib/api";
+import type { LaborKitItem, SortState } from "@/types";
 
 interface LaborKitItemListProps {
   kitId: string;
 }
 
 export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
-  const [kit, setKit] = useState<LaborKit | null>(null);
   const [items, setItems] = useState<LaborKitItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,14 +64,10 @@ export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [kitData, itemsData] = await Promise.all([
-        laborKitsApi.get(kitId),
-        laborKitItemsApi.list(kitId, {
-          sort_by: sortState.sortBy || undefined,
-          sort_order: sortState.sortOrder,
-        }),
-      ]);
-      setKit(kitData);
+      const itemsData = await laborKitItemsApi.list(kitId, {
+        sort_by: sortState.sortBy || undefined,
+        sort_order: sortState.sortOrder,
+      });
       setItems(itemsData.items);
     } finally {
       setLoading(false);
@@ -173,52 +167,8 @@ export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
     }
   };
 
-  if (loading && !kit) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="space-y-2">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!kit) {
-    return (
-      <div className="rounded-lg border p-8 text-center text-muted-foreground">
-        Labor kit not found.{" "}
-        <Link href="/laborkit" className="text-primary underline">
-          Return to list
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Link href="/laborkit">
-          <Button variant="ghost" size="sm">
-            &larr; Back to list
-          </Button>
-        </Link>
-      </div>
-
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{kit.name}</h1>
-        {kit.description && (
-          <p className="text-muted-foreground">{kit.description}</p>
-        )}
-        <div className="flex gap-2 text-sm text-muted-foreground">
-          {kit.category && <span>Category: {kit.category}</span>}
-          <span>|</span>
-          <span>{kit.is_active ? "Active" : "Inactive"}</span>
-        </div>
-      </div>
-
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Template Items</h2>
         <Dialog
