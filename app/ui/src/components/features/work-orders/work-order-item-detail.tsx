@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -33,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { workOrderItemsApi } from "@/lib/api";
 import { useWorkOrderItem, mutateWorkOrderItem } from "@/hooks/use-work-order-item";
 import { useWorkOrderItems } from "@/hooks/use-work-order-items";
@@ -95,45 +91,26 @@ function itemToFormData(item: WorkOrderItem): FormData {
   };
 }
 
-function CollapsibleCard({
-  title,
-  children,
-  defaultOpen = true,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer select-none hover:bg-muted/50">
-            <CardTitle className="flex items-center gap-2 text-base">
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              {title}
-            </CardTitle>
-          </CardHeader>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <CardContent>{children}</CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
-  );
-}
-
 export function WorkOrderItemDetail({
   workOrderId,
   itemId,
 }: WorkOrderItemDetailProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const activeTab = searchParams.get("tab") || "details";
+
+  const handleTabChange = (tab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "details") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const queryString = params.toString();
+    router.push(`${pathname}${queryString ? `?${queryString}` : ""}`, { scroll: false });
+  };
+
   const { item, isLoading, error } = useWorkOrderItem(workOrderId, itemId);
   const { items: allItems } = useWorkOrderItems(workOrderId);
   const [formData, setFormData] = useState<FormData | null>(null);
@@ -408,213 +385,259 @@ export function WorkOrderItemDetail({
         </div>
       </div>
 
-      {/* Defect Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Defect Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="discrepancy">Discrepancy</Label>
-            <Textarea
-              id="discrepancy"
-              value={formData.discrepancy}
-              onChange={(e) => updateField("discrepancy", e.target.value)}
-              rows={3}
-              placeholder="Describe the issue or discrepancy..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="corrective_action">Corrective Action</Label>
-            <Textarea
-              id="corrective_action"
-              value={formData.corrective_action}
-              onChange={(e) => updateField("corrective_action", e.target.value)}
-              rows={3}
-              placeholder="Describe the corrective action taken..."
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList variant="line">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="parts">Parts</TabsTrigger>
+          <TabsTrigger value="tools">Tools</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
 
-      {/* Two-column grid for Classification and Time & Billing */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Work Classification */}
-        <CollapsibleCard title="Work Classification" defaultOpen={true}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => updateField("category", e.target.value)}
-                placeholder="e.g., Inspection"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sub_category">Sub-Category</Label>
-              <Input
-                id="sub_category"
-                value={formData.sub_category}
-                onChange={(e) => updateField("sub_category", e.target.value)}
-                placeholder="e.g., Exterior"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ata_code">ATA Code</Label>
-              <Input
-                id="ata_code"
-                value={formData.ata_code}
-                onChange={(e) => updateField("ata_code", e.target.value)}
-                placeholder="e.g., 71-00"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input
-                id="department"
-                value={formData.department}
-                onChange={(e) => updateField("department", e.target.value)}
-                placeholder="e.g., Maintenance"
-              />
-            </div>
-          </div>
-        </CollapsibleCard>
-
-        {/* Time & Billing */}
-        <CollapsibleCard title="Time & Billing" defaultOpen={true}>
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+        {/* Details Tab */}
+        <TabsContent value="details" className="space-y-6">
+          {/* Defect Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Defect Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="hours_estimate">Hours Estimate</Label>
-                <Input
-                  id="hours_estimate"
-                  type="number"
-                  step="0.25"
-                  value={formData.hours_estimate}
-                  onChange={(e) => updateField("hours_estimate", e.target.value)}
-                  placeholder="0.0"
+                <Label htmlFor="discrepancy">Discrepancy</Label>
+                <Textarea
+                  id="discrepancy"
+                  value={formData.discrepancy}
+                  onChange={(e) => updateField("discrepancy", e.target.value)}
+                  rows={3}
+                  placeholder="Describe the issue or discrepancy..."
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="billing_method">Billing Method</Label>
-                <Select
-                  value={formData.billing_method}
-                  onValueChange={(v) => updateField("billing_method", v)}
-                >
-                  <SelectTrigger id="billing_method">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hourly">Hourly</SelectItem>
-                    <SelectItem value="flat_rate">Flat Rate</SelectItem>
-                    <SelectItem value="warranty">Warranty</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="corrective_action">Corrective Action</Label>
+                <Textarea
+                  id="corrective_action"
+                  value={formData.corrective_action}
+                  onChange={(e) => updateField("corrective_action", e.target.value)}
+                  rows={3}
+                  placeholder="Describe the corrective action taken..."
+                />
               </div>
-            </div>
-            {formData.billing_method === "flat_rate" && (
+            </CardContent>
+          </Card>
+
+          {/* Two-column grid for Classification and Time & Billing */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Work Classification */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Work Classification</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) => updateField("category", e.target.value)}
+                      placeholder="e.g., Inspection"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sub_category">Sub-Category</Label>
+                    <Input
+                      id="sub_category"
+                      value={formData.sub_category}
+                      onChange={(e) => updateField("sub_category", e.target.value)}
+                      placeholder="e.g., Exterior"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ata_code">ATA Code</Label>
+                    <Input
+                      id="ata_code"
+                      value={formData.ata_code}
+                      onChange={(e) => updateField("ata_code", e.target.value)}
+                      placeholder="e.g., 71-00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Input
+                      id="department"
+                      value={formData.department}
+                      onChange={(e) => updateField("department", e.target.value)}
+                      placeholder="e.g., Maintenance"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Time & Billing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Time & Billing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="hours_estimate">Hours Estimate</Label>
+                      <Input
+                        id="hours_estimate"
+                        type="number"
+                        step="0.25"
+                        value={formData.hours_estimate}
+                        onChange={(e) => updateField("hours_estimate", e.target.value)}
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="billing_method">Billing Method</Label>
+                      <Select
+                        value={formData.billing_method}
+                        onValueChange={(v) => updateField("billing_method", v)}
+                      >
+                        <SelectTrigger id="billing_method">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hourly">Hourly</SelectItem>
+                          <SelectItem value="flat_rate">Flat Rate</SelectItem>
+                          <SelectItem value="warranty">Warranty</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {formData.billing_method === "flat_rate" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="flat_rate">Flat Rate Amount</Label>
+                      <Input
+                        id="flat_rate"
+                        type="number"
+                        step="0.01"
+                        value={formData.flat_rate}
+                        onChange={(e) => updateField("flat_rate", e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="do_not_bill"
+                        checked={formData.do_not_bill}
+                        onCheckedChange={(checked) =>
+                          updateField("do_not_bill", checked)
+                        }
+                      />
+                      <Label htmlFor="do_not_bill" className="cursor-pointer">
+                        Do Not Bill
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="enable_rii"
+                        checked={formData.enable_rii}
+                        onCheckedChange={(checked) =>
+                          updateField("enable_rii", checked)
+                        }
+                      />
+                      <Label htmlFor="enable_rii" className="cursor-pointer">
+                        Enable RII
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="flat_rate">Flat Rate Amount</Label>
-                <Input
-                  id="flat_rate"
-                  type="number"
-                  step="0.01"
-                  value={formData.flat_rate}
-                  onChange={(e) => updateField("flat_rate", e.target.value)}
-                  placeholder="0.00"
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => updateField("notes", e.target.value)}
+                  rows={3}
+                  placeholder="Additional notes..."
                 />
               </div>
-            )}
-            <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="do_not_bill"
-                  checked={formData.do_not_bill}
-                  onCheckedChange={(checked) =>
-                    updateField("do_not_bill", checked)
-                  }
-                />
-                <Label htmlFor="do_not_bill" className="cursor-pointer">
-                  Do Not Bill
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="enable_rii"
-                  checked={formData.enable_rii}
-                  onCheckedChange={(checked) =>
-                    updateField("enable_rii", checked)
-                  }
-                />
-                <Label htmlFor="enable_rii" className="cursor-pointer">
-                  Enable RII
-                </Label>
-              </div>
-            </div>
-          </div>
-        </CollapsibleCard>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Parts & Tools placeholders */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <CollapsibleCard title="Parts" defaultOpen={false}>
-          <p className="text-sm text-muted-foreground">
-            Parts tracking coming soon.
-          </p>
-        </CollapsibleCard>
-        <CollapsibleCard title="Tools" defaultOpen={false}>
-          <p className="text-sm text-muted-foreground">
-            Tools tracking coming soon.
-          </p>
-        </CollapsibleCard>
-      </div>
+        {/* Parts Tab */}
+        <TabsContent value="parts">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Parts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Parts tracking coming soon.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Notes - only show if there's content or user wants to add */}
-      <CollapsibleCard
-        title="Notes"
-        defaultOpen={Boolean(formData.notes || item.notes)}
-      >
-        <div className="space-y-2">
-          <Textarea
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => updateField("notes", e.target.value)}
-            rows={3}
-            placeholder="Additional notes..."
-          />
-        </div>
-      </CollapsibleCard>
+        {/* Tools Tab */}
+        <TabsContent value="tools">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Tools</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Tools tracking coming soon.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Audit Trail */}
-      <CollapsibleCard title="Audit Trail" defaultOpen={false}>
-        <div className="grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <span className="font-medium">Created By:</span>{" "}
-            <span className="text-muted-foreground">{item.created_by}</span>
-          </div>
-          <div>
-            <span className="font-medium">Created At:</span>{" "}
-            <span className="text-muted-foreground">
-              {new Date(item.created_at).toLocaleString()}
-            </span>
-          </div>
-          {item.updated_by && (
-            <>
-              <div>
-                <span className="font-medium">Updated By:</span>{" "}
-                <span className="text-muted-foreground">{item.updated_by}</span>
+        {/* History Tab */}
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Audit Trail</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <span className="font-medium">Created By:</span>{" "}
+                  <span className="text-muted-foreground">{item.created_by}</span>
+                </div>
+                <div>
+                  <span className="font-medium">Created At:</span>{" "}
+                  <span className="text-muted-foreground">
+                    {new Date(item.created_at).toLocaleString()}
+                  </span>
+                </div>
+                {item.updated_by && (
+                  <>
+                    <div>
+                      <span className="font-medium">Updated By:</span>{" "}
+                      <span className="text-muted-foreground">{item.updated_by}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Updated At:</span>{" "}
+                      <span className="text-muted-foreground">
+                        {new Date(item.updated_at).toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
-              <div>
-                <span className="font-medium">Updated At:</span>{" "}
-                <span className="text-muted-foreground">
-                  {new Date(item.updated_at).toLocaleString()}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      </CollapsibleCard>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Save/Cancel Footer */}
       <div className="sticky bottom-0 -mx-6 border-t bg-background px-6 py-4">
@@ -622,7 +645,7 @@ export function WorkOrderItemDetail({
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || !isDirty}>
+          <Button onClick={handleSave} disabled={isSaving || !isDirty || activeTab !== "details"}>
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
