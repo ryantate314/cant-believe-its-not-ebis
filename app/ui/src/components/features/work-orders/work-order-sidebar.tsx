@@ -21,7 +21,7 @@ export function WorkOrderSidebar({ workOrderId }: WorkOrderSidebarProps) {
       <ul className="space-y-1">
         {navItems.map((item) => {
           const href = `/workorder/${workOrderId}/${item.href}`;
-          const isActive = pathname === href;
+          const isActive = pathname.startsWith(href);
 
           return (
             <li key={item.href}>

@@ -291,18 +291,8 @@ export function WorkOrderItemDetail({
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb and Navigation */}
-      <div className="flex items-center justify-between">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link
-            href={`/workorder/${workOrderId}/item`}
-            className="hover:text-foreground hover:underline"
-          >
-            Items
-          </Link>
-          <span>/</span>
-          <span className="text-foreground">Item #{item.item_number}</span>
-        </nav>
+      {/* Item Navigation */}
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           {totalItems > 0 && (
             <span className="text-sm text-muted-foreground">
