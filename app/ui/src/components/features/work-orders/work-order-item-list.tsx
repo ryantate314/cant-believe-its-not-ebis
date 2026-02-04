@@ -31,6 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { workOrderItemsApi, laborKitsApi } from "@/lib/api";
 import type { WorkOrderItem, WorkOrderItemStatus, SortState, LaborKit } from "@/types";
 
@@ -337,53 +347,57 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
 
         {/* Apply Labor Kit Dialog */}
         <Dialog open={applyKitDialogOpen} onOpenChange={setApplyKitDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Apply Labor Kit</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select a labor kit to apply its template items to this work order.
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="labor-kit">Labor Kit</Label>
-                <Select
-                  value={selectedKitId}
-                  onValueChange={setSelectedKitId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a labor kit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {laborKits.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        No labor kits available
-                      </SelectItem>
-                    ) : (
-                      laborKits.map((kit) => (
-                        <SelectItem key={kit.id} value={kit.id}>
-                          {kit.name}
-                          {kit.category && ` (${kit.category})`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setApplyKitDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleApplyKit}
-                  disabled={!selectedKitId || applyingKit}
-                >
-                  {applyingKit ? "Applying..." : "Apply Kit"}
-                </Button>
-              </div>
+            <p className="text-sm text-muted-foreground">
+              Search and select a labor kit to apply its template items to this work order.
+            </p>
+            <Command className="rounded-lg border">
+              <CommandInput placeholder="Search labor kits..." />
+              <CommandList className="max-h-[300px]">
+                <CommandEmpty>No labor kit found.</CommandEmpty>
+                <CommandGroup>
+                  {laborKits.map((kit) => (
+                    <CommandItem
+                      key={kit.id}
+                      value={`${kit.name} ${kit.category || ""}`}
+                      onSelect={() => setSelectedKitId(kit.id)}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedKitId === kit.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{kit.name}</span>
+                        {kit.category && (
+                          <span className="text-sm text-muted-foreground">
+                            {kit.category}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setApplyKitDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleApplyKit}
+                disabled={!selectedKitId || applyingKit}
+              >
+                {applyingKit ? "Applying..." : "Apply Kit"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
