@@ -4,11 +4,15 @@ import os
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+from core.config import get_settings
+
+settings = get_settings()
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/cirrus_mro",
+    settings.database_url,
 )
 
 # Global engine and session factory (lazily initialized)
@@ -44,14 +48,14 @@ def _get_session_factory():
     return _async_session_factory
 
 
+class Base(DeclarativeBase):
+    """Base class for all SQLAlchemy models."""
+    pass
+
+
 # Backwards-compatible aliases
-@property
-def engine():
-    return _get_engine()
-
-
-def async_session_factory():
-    return _get_session_factory()()
+engine = property(lambda self: _get_engine())
+AsyncSessionLocal = _get_session_factory
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
@@ -64,6 +68,10 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+# Alias for compatibility with work order POC code
+get_db = get_session
 
 
 async def reset_engine():
