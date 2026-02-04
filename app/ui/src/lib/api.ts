@@ -30,6 +30,7 @@ import type {
   AircraftUpdateInput,
 } from "@/types/aircraft";
 import type { SortOrder } from "@/types/sorting";
+import type { PaginatedAuditResponse } from "@/types/audit";
 
 const API_BASE = "/api";
 
@@ -287,6 +288,17 @@ export const aircraftApi = {
     fetchApi(`/aircraft/${id}`, {
       method: "DELETE",
     }),
+};
+
+// Audit API
+export const auditApi = {
+  getHistory: (
+    entityType: string,
+    entityId: string,
+    page = 1,
+    pageSize = 50
+  ): Promise<PaginatedAuditResponse> =>
+    fetchApi(`/audit/${entityType}/${entityId}?page=${page}&page_size=${pageSize}`),
 };
 
 export { ApiError };

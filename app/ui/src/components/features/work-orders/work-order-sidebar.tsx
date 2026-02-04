@@ -11,6 +11,7 @@ interface WorkOrderSidebarProps {
 const navItems = [
   { label: "Items", href: "item" },
   { label: "Configuration", href: "config" },
+  { label: "History", href: "history" },
 ];
 
 export function WorkOrderSidebar({ workOrderId }: WorkOrderSidebarProps) {
