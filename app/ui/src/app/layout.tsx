@@ -34,7 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={false}>
           <div className="flex min-h-screen flex-col w-full">
             <Navbar />
             <div className="relative flex flex-1">

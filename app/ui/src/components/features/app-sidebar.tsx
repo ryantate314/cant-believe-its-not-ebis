@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export interface NavItem {
@@ -28,6 +29,11 @@ interface AppSidebarProps {
 
 export function AppSidebar({ navItems }: AppSidebarProps) {
   const pathname = usePathname();
+  const { setOpen } = useSidebar();
+
+  const handleLinkClick = () => {
+    setOpen(false);
+  };
 
   return (
     <Sidebar collapsible="icon-overlay">
@@ -51,7 +57,7 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
                       isActive={isActive}
                       tooltip={item.label}
                     >
-                      <Link href={item.href}>
+                      <Link href={item.href} onClick={handleLinkClick}>
                         <item.icon />
                         <span>{item.label}</span>
                       </Link>
