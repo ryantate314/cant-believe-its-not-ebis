@@ -3,3 +3,4 @@ export { WorkOrderForm } from "./work-order-form";
 export { WorkOrderHeader } from "./work-order-header";
 export { WorkOrderSidebar } from "./work-order-sidebar";
 export { WorkOrderItemList } from "./work-order-item-list";
+export { WorkOrderItemDetail } from "./work-order-item-detail";

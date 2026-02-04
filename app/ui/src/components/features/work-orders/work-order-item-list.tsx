@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -56,6 +57,7 @@ interface WorkOrderItemListProps {
 }
 
 export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
+  const router = useRouter();
   const [items, setItems] = useState<WorkOrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -63,7 +65,6 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
   const [laborKits, setLaborKits] = useState<LaborKit[]>([]);
   const [selectedKitId, setSelectedKitId] = useState<string>("");
   const [applyingKit, setApplyingKit] = useState(false);
-  const [editingItem, setEditingItem] = useState<WorkOrderItem | null>(null);
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "item_number",
     sortOrder: "asc",
@@ -116,22 +117,6 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
       department: "",
       status: "open",
     });
-    setEditingItem(null);
-  };
-
-  const openEditDialog = (item: WorkOrderItem) => {
-    setEditingItem(item);
-    setFormData({
-      discrepancy: item.discrepancy || "",
-      corrective_action: item.corrective_action || "",
-      notes: item.notes || "",
-      category: item.category || "",
-      ata_code: item.ata_code || "",
-      hours_estimate: item.hours_estimate?.toString() || "",
-      department: item.department || "",
-      status: item.status,
-    });
-    setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,33 +130,15 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
     };
 
     try {
-      if (editingItem) {
-        await workOrderItemsApi.update(workOrderId, editingItem.id, {
-          ...data,
-          updated_by: "system",
-        });
-      } else {
-        await workOrderItemsApi.create(workOrderId, {
-          ...data,
-          created_by: "system",
-        });
-      }
+      await workOrderItemsApi.create(workOrderId, {
+        ...data,
+        created_by: "system",
+      });
       setDialogOpen(false);
       resetForm();
       fetchItems();
     } catch (error) {
-      console.error("Failed to save item:", error);
-    }
-  };
-
-  const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-
-    try {
-      await workOrderItemsApi.delete(workOrderId, itemId);
-      fetchItems();
-    } catch (error) {
-      console.error("Failed to delete item:", error);
+      console.error("Failed to create item:", error);
     }
   };
 
@@ -224,9 +191,7 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
             </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>
-                {editingItem ? "Edit Item" : "Add New Item"}
-              </DialogTitle>
+              <DialogTitle>Add New Item</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -363,9 +328,7 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {editingItem ? "Update" : "Create"}
-                </Button>
+                <Button type="submit">Create</Button>
               </div>
             </form>
           </DialogContent>
@@ -475,12 +438,17 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                 >
                   Hours
                 </SortableTableHead>
-                <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow
+                  key={item.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() =>
+                    router.push(`/workorder/${workOrderId}/item/${item.id}`)
+                  }
+                >
                   <TableCell className="font-medium">
                     {item.item_number}
                   </TableCell>
@@ -497,25 +465,6 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>{item.hours_estimate || "-"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(item)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
