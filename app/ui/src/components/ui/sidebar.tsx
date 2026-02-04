@@ -109,6 +109,31 @@ function SidebarProvider({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [toggleSidebar])
 
+  // Click-outside detection for icon-overlay mode
+  React.useEffect(() => {
+    if (!open) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const sidebar = document.querySelector('[data-sidebar="sidebar"]')
+      const trigger = document.querySelector('[data-sidebar="trigger"]')
+      if (
+        sidebar &&
+        !sidebar.contains(e.target as Node) &&
+        trigger &&
+        !trigger.contains(e.target as Node)
+      ) {
+        // Check if we're in icon-overlay mode
+        const sidebarSlot = document.querySelector('[data-collapsible-mode="icon-overlay"]')
+        if (sidebarSlot) {
+          setOpen(false)
+        }
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [open, setOpen])
+
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed"
@@ -161,7 +186,7 @@ function Sidebar({
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
-  collapsible?: "offcanvas" | "icon" | "none"
+  collapsible?: "offcanvas" | "icon" | "icon-overlay" | "none"
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -205,11 +230,15 @@ function Sidebar({
     )
   }
 
+  // For icon-overlay mode, we use different data attributes to style the gap and container
+  const isIconOverlay = collapsible === "icon-overlay"
+
   return (
     <div
       className="group peer text-sidebar-foreground hidden md:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
+      data-collapsible-mode={collapsible}
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
@@ -218,12 +247,18 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+          "relative bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+          // For icon-overlay mode: gap always stays at icon width
+          isIconOverlay
+            ? "w-(--sidebar-width-icon)"
+            : cn(
+                "w-(--sidebar-width)",
+                variant === "floating" || variant === "inset"
+                  ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+                  : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+              )
         )}
       />
       <div
@@ -237,6 +272,14 @@ function Sidebar({
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          // Icon-overlay mode: collapse to icon width when collapsed, overlay when expanded
+          isIconOverlay && [
+            "group-data-[state=collapsed]:w-(--sidebar-width-icon)",
+            "group-data-[state=expanded]:z-40",
+            "group-data-[state=expanded]:shadow-xl",
+            side === "left" && "group-data-[side=left]:border-r",
+            side === "right" && "group-data-[side=right]:border-l",
+          ],
           className
         )}
         {...props}

@@ -30,7 +30,7 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon-overlay">
       <SidebarHeader className="flex-row justify-end">
         <SidebarTrigger />
       </SidebarHeader>
