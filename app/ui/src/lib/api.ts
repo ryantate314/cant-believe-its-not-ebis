@@ -29,6 +29,7 @@ import type {
   AircraftCreateInput,
   AircraftUpdateInput,
 } from "@/types/aircraft";
+import type { WorkOrderCountsByCityResponse } from "@/types/dashboard";
 import type { SortOrder } from "@/types/sorting";
 
 const API_BASE = "/api";
@@ -287,6 +288,12 @@ export const aircraftApi = {
     fetchApi(`/aircraft/${id}`, {
       method: "DELETE",
     }),
+};
+
+// Dashboard API
+export const dashboardApi = {
+  getWorkOrderCountsByCity: (): Promise<WorkOrderCountsByCityResponse> =>
+    fetchApi("/dashboard/work-order-counts-by-city"),
 };
 
 export { ApiError };
