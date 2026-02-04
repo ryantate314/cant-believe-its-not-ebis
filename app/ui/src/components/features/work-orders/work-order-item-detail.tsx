@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { workOrderItemsApi } from "@/lib/api";
 import { useWorkOrderItem, mutateWorkOrderItem } from "@/hooks/use-work-order-item";
+import { useWorkOrderItems } from "@/hooks/use-work-order-items";
 import type { WorkOrderItem, WorkOrderItemStatus, WorkOrderItemUpdateInput } from "@/types";
 
 const STATUS_COLORS: Record<WorkOrderItemStatus, string> = {
@@ -134,11 +135,29 @@ export function WorkOrderItemDetail({
 }: WorkOrderItemDetailProps) {
   const router = useRouter();
   const { item, isLoading, error } = useWorkOrderItem(workOrderId, itemId);
+  const { items: allItems } = useWorkOrderItems(workOrderId);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [originalFormData, setOriginalFormData] = useState<FormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Calculate previous and next items for navigation
+  const { prevItem, nextItem, currentIndex, totalItems } = useMemo(() => {
+    const index = allItems.findIndex((i) => i.id === itemId);
+    return {
+      prevItem: index > 0 ? allItems[index - 1] : null,
+      nextItem: index < allItems.length - 1 ? allItems[index + 1] : null,
+      currentIndex: index,
+      totalItems: allItems.length,
+    };
+  }, [allItems, itemId]);
+
+  // Reset form data when itemId changes (navigation)
+  useEffect(() => {
+    setFormData(null);
+    setOriginalFormData(null);
+  }, [itemId]);
 
   // Initialize form data when item loads
   useEffect(() => {
@@ -295,17 +314,64 @@ export function WorkOrderItemDetail({
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link
-          href={`/workorder/${workOrderId}/item`}
-          className="hover:text-foreground hover:underline"
-        >
-          Items
-        </Link>
-        <span>/</span>
-        <span className="text-foreground">Item #{item.item_number}</span>
-      </nav>
+      {/* Breadcrumb and Navigation */}
+      <div className="flex items-center justify-between">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link
+            href={`/workorder/${workOrderId}/item`}
+            className="hover:text-foreground hover:underline"
+          >
+            Items
+          </Link>
+          <span>/</span>
+          <span className="text-foreground">Item #{item.item_number}</span>
+        </nav>
+        <div className="flex items-center gap-2">
+          {totalItems > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {currentIndex + 1} of {totalItems}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!prevItem}
+            onClick={() => {
+              if (prevItem) {
+                if (isDirty) {
+                  const confirmed = window.confirm(
+                    "You have unsaved changes. Are you sure you want to leave?"
+                  );
+                  if (!confirmed) return;
+                }
+                router.push(`/workorder/${workOrderId}/item/${prevItem.id}`);
+              }
+            }}
+            title={prevItem ? `Previous: Item #${prevItem.item_number}` : "No previous item"}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!nextItem}
+            onClick={() => {
+              if (nextItem) {
+                if (isDirty) {
+                  const confirmed = window.confirm(
+                    "You have unsaved changes. Are you sure you want to leave?"
+                  );
+                  if (!confirmed) return;
+                }
+                router.push(`/workorder/${workOrderId}/item/${nextItem.id}`);
+              }
+            }}
+            title={nextItem ? `Next: Item #${nextItem.item_number}` : "No next item"}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Header with Status and Delete */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
