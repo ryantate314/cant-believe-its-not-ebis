@@ -182,6 +182,8 @@ export function WorkOrderItemDetail({
         updated_by: "system",
       });
       mutateWorkOrderItem(workOrderId, itemId, updated);
+      // Update originalFormData so the form doesn't show as dirty for this change
+      setOriginalFormData((prev) => (prev ? { ...prev, status: newStatus } : null));
       toast.success(`Status updated to ${STATUS_LABELS[newStatus]}`);
     } catch (err) {
       // Revert on error
