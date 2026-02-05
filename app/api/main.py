@@ -10,6 +10,7 @@ from routers import (
     labor_kit_items_router,
     aircraft_router,
     dashboard_router,
+    tools_router,
 )
 
 settings = get_settings()
@@ -37,6 +38,7 @@ app.include_router(labor_kits_router, prefix=settings.api_v1_prefix)
 app.include_router(labor_kit_items_router, prefix=settings.api_v1_prefix)
 app.include_router(aircraft_router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard_router, prefix=settings.api_v1_prefix)
+app.include_router(tools_router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/")

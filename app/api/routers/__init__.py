@@ -5,6 +5,7 @@ from routers.labor_kits import router as labor_kits_router
 from routers.labor_kit_items import router as labor_kit_items_router
 from routers.aircraft import router as aircraft_router
 from routers.dashboard import router as dashboard_router
+from routers.tools import router as tools_router
 
 __all__ = [
     "cities_router",
@@ -14,4 +15,5 @@ __all__ = [
     "labor_kit_items_router",
     "aircraft_router",
     "dashboard_router",
+    "tools_router",
 ]
