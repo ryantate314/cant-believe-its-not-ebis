@@ -35,6 +35,13 @@ from crud.aircraft import (
     update_aircraft,
     delete_aircraft,
 )
+from crud.customer import (
+    get_customers,
+    get_customer_by_uuid,
+    create_customer,
+    update_customer,
+    delete_customer,
+)
 
 __all__ = [
     "get_cities",
@@ -65,4 +72,9 @@ __all__ = [
     "create_aircraft",
     "update_aircraft",
     "delete_aircraft",
+    "get_customers",
+    "get_customer_by_uuid",
+    "create_customer",
+    "update_customer",
+    "delete_customer",
 ]
