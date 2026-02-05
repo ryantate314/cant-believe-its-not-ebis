@@ -5,16 +5,6 @@ from models.work_order import WorkOrder, WorkOrderStatus
 from models.city import City
 from schemas.dashboard import CityWorkOrderCount
 
-# Statuses considered "open" for dashboard metrics
-OPEN_STATUSES = [
-    WorkOrderStatus.OPEN,
-    WorkOrderStatus.IN_PROGRESS,
-    WorkOrderStatus.SCHEDULED,
-    WorkOrderStatus.PENDING,
-    WorkOrderStatus.TRACKING,
-    WorkOrderStatus.IN_REVIEW,
-]
-
 
 async def get_open_work_order_counts_by_city(
     db: AsyncSession,
@@ -28,7 +18,7 @@ async def get_open_work_order_counts_by_city(
             func.count(WorkOrder.id).label("open_count"),
         )
         .join(WorkOrder, WorkOrder.city_id == City.id)
-        .where(WorkOrder.status.in_(OPEN_STATUSES))
+        .where(WorkOrder.status.not_in(WorkOrderStatus.terminal_statuses()))
         .group_by(City.uuid, City.code, City.name)
         .order_by(func.count(WorkOrder.id).desc())
     )

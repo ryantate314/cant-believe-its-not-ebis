@@ -20,6 +20,19 @@ class WorkOrderStatus(str, enum.Enum):
     COMPLETED = "completed"
     VOID = "void"
 
+    @classmethod
+    def terminal_statuses(cls) -> list["WorkOrderStatus"]:
+        """Statuses that represent a closed/finished work order."""
+        return [cls.COMPLETED, cls.VOID]
+
+    def is_terminal(self) -> bool:
+        """Check if this status represents a closed/finished work order."""
+        return self in self.terminal_statuses()
+
+    def is_open(self) -> bool:
+        """Check if this status represents an active/open work order."""
+        return not self.is_terminal()
+
 
 class PriorityLevel(str, enum.Enum):
     LOW = "low"
