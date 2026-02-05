@@ -138,4 +138,5 @@ async def delete_work_order_item(db: AsyncSession, item_uuid: UUID) -> bool:
         return False
 
     await db.delete(item)
+    await db.flush()  # Ensure after_delete event fires for audit logging
     return True

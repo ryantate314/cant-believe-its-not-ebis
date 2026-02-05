@@ -276,3 +276,152 @@ async def test_context_captured_in_audit_record(db_session, test_city, cleanup_w
     assert audit_record.session_id == "session-456"
     # IP address may be stored differently, just verify it's captured
     assert audit_record.ip_address is not None
+
+
+# =============================================================================
+# WorkOrderItem Audit Capture Tests
+# =============================================================================
+
+
+@pytest_asyncio.fixture
+async def test_work_order_for_items(db_session, test_city, cleanup_work_orders):
+    """Create a work order to attach items to."""
+    from models.work_order import WorkOrder
+
+    work_order = WorkOrder(
+        work_order_number="WO-TEST-ITEMS-001",
+        sequence_number=100,
+        city_id=test_city,
+        created_by="test-user",
+    )
+    db_session.add(work_order)
+    await db_session.commit()
+    await db_session.refresh(work_order)
+    return work_order
+
+
+@pytest.mark.asyncio
+async def test_work_order_item_insert_creates_audit_record(
+    db_session, test_work_order_for_items, cleanup_work_orders
+):
+    """Inserting a work order item creates an INSERT audit record."""
+    from models.audit_log import AuditLog
+    from models.work_order_item import WorkOrderItem
+
+    # Create a work order item
+    item = WorkOrderItem(
+        work_order_id=test_work_order_for_items.id,
+        item_number=1,
+        discrepancy="Test discrepancy",
+        corrective_action="Test corrective action",
+        created_by="test-user",
+    )
+    db_session.add(item)
+    await db_session.commit()
+    await db_session.refresh(item)
+
+    # Query audit log for the record
+    result = await db_session.execute(
+        select(AuditLog).where(
+            AuditLog.entity_type == "work_order_item",
+            AuditLog.entity_id == item.uuid,
+            AuditLog.action == "INSERT",
+        )
+    )
+    audit_record = result.scalar_one_or_none()
+
+    assert audit_record is not None
+    assert audit_record.new_values is not None
+    assert audit_record.old_values is None
+    assert audit_record.new_values["item_number"] == 1
+    assert audit_record.new_values["discrepancy"] == "Test discrepancy"
+    assert audit_record.new_values["work_order_id"] == test_work_order_for_items.id
+
+
+@pytest.mark.asyncio
+async def test_work_order_item_update_creates_audit_record_with_diff(
+    db_session, test_work_order_for_items, cleanup_work_orders
+):
+    """Updating a work order item creates an UPDATE audit record with changed fields."""
+    from models.audit_log import AuditLog
+    from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
+
+    # Create a work order item
+    item = WorkOrderItem(
+        work_order_id=test_work_order_for_items.id,
+        item_number=1,
+        status=WorkOrderItemStatus.OPEN,
+        discrepancy="Original discrepancy",
+        corrective_action="Original corrective action",
+        created_by="test-user",
+    )
+    db_session.add(item)
+    await db_session.commit()
+    await db_session.refresh(item)
+
+    # Update the item
+    item.status = WorkOrderItemStatus.IN_PROGRESS
+    item.discrepancy = "Updated discrepancy"
+    item.updated_by = "another-user"
+    await db_session.commit()
+
+    # Query audit log for UPDATE record
+    result = await db_session.execute(
+        select(AuditLog).where(
+            AuditLog.entity_type == "work_order_item",
+            AuditLog.entity_id == item.uuid,
+            AuditLog.action == "UPDATE",
+        )
+    )
+    audit_record = result.scalar_one_or_none()
+
+    assert audit_record is not None
+    assert "status" in audit_record.changed_fields
+    assert "discrepancy" in audit_record.changed_fields
+    assert audit_record.old_values["status"] == "open"
+    assert audit_record.new_values["status"] == "in_progress"
+    assert audit_record.old_values["discrepancy"] == "Original discrepancy"
+    assert audit_record.new_values["discrepancy"] == "Updated discrepancy"
+
+
+@pytest.mark.asyncio
+async def test_work_order_item_delete_creates_audit_record(
+    db_session, test_work_order_for_items, cleanup_work_orders
+):
+    """Deleting a work order item creates a DELETE audit record."""
+    from models.audit_log import AuditLog
+    from models.work_order_item import WorkOrderItem
+
+    # Create and then delete a work order item
+    item = WorkOrderItem(
+        work_order_id=test_work_order_for_items.id,
+        item_number=1,
+        discrepancy="Test discrepancy",
+        corrective_action="Test corrective action",
+        created_by="test-user",
+    )
+    db_session.add(item)
+    await db_session.commit()
+    await db_session.refresh(item)
+
+    item_uuid = item.uuid
+    work_order_id = item.work_order_id
+
+    await db_session.delete(item)
+    await db_session.commit()
+
+    # Query audit log for DELETE record
+    result = await db_session.execute(
+        select(AuditLog).where(
+            AuditLog.entity_type == "work_order_item",
+            AuditLog.entity_id == item_uuid,
+            AuditLog.action == "DELETE",
+        )
+    )
+    audit_record = result.scalar_one_or_none()
+
+    assert audit_record is not None
+    assert audit_record.old_values is not None
+    assert audit_record.new_values is None
+    assert audit_record.old_values["work_order_id"] == work_order_id
+    assert audit_record.old_values["discrepancy"] == "Test discrepancy"

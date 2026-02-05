@@ -20,3 +20,21 @@ export function useAuditHistory(
     mutate,
   };
 }
+
+export function useWorkOrderCombinedAuditHistory(
+  workOrderId: string,
+  page = 1,
+  pageSize = 50
+) {
+  const { data, error, isLoading, mutate } = useSWR<PaginatedAuditResponse>(
+    workOrderId ? `audit:work-order-combined:${workOrderId}:${page}` : null,
+    () => auditApi.getWorkOrderCombinedHistory(workOrderId, page, pageSize)
+  );
+
+  return {
+    auditHistory: data,
+    isLoading,
+    error,
+    mutate,
+  };
+}

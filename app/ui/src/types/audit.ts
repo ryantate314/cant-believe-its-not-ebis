@@ -12,6 +12,8 @@ export interface AuditRecord {
   session_id: string | null;
   ip_address: string | null;
   created_at: string;
+  // Optional context for work order items
+  item_number?: number | null;
 }
 
 export interface PaginatedAuditResponse {

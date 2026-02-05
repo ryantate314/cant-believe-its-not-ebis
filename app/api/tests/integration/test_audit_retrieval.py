@@ -512,3 +512,213 @@ async def test_delete_captures_old_values(
     assert record.old_values is not None
     assert record.old_values["work_order_number"] == unique_num
     assert record.new_values is None
+
+
+# =============================================================================
+# Combined Audit Endpoint Tests (WorkOrder + WorkOrderItem)
+# =============================================================================
+
+
+@pytest_asyncio.fixture
+async def test_work_order_for_combined(db_session, test_city, cleanup_retrieval_work_orders):
+    """Create a work order for combined audit tests."""
+    from models.work_order import WorkOrder
+
+    unique_num = f"WO-RET-{uuid4().hex[:8]}"
+    work_order = WorkOrder(
+        work_order_number=unique_num,
+        sequence_number=1,
+        city_id=test_city,
+        created_by="retrieval-test-user",
+    )
+    db_session.add(work_order)
+    await db_session.commit()
+    await db_session.refresh(work_order)
+    return work_order
+
+
+async def test_combined_audit_returns_work_order_item_insert(
+    db_session, test_work_order_for_combined, cleanup_retrieval_work_orders
+):
+    """Combined audit endpoint returns INSERT records for work order items."""
+    import json
+    from sqlalchemy import cast, or_
+    from sqlalchemy.dialects.postgresql import JSONB
+
+    from models.audit_log import AuditLog
+    from models.work_order_item import WorkOrderItem
+
+    work_order = test_work_order_for_combined
+
+    # Create a work order item
+    item = WorkOrderItem(
+        work_order_id=work_order.id,
+        item_number=1,
+        discrepancy="Test discrepancy for combined",
+        corrective_action="Test corrective action",
+        created_by="retrieval-test-user",
+    )
+    db_session.add(item)
+    await db_session.commit()
+    await db_session.refresh(item)
+
+    # Query using the same logic as the combined audit endpoint
+    work_order_id_json = cast(
+        json.dumps({"work_order_id": work_order.id}), JSONB
+    )
+
+    combined_filter = or_(
+        # Work order itself
+        (AuditLog.entity_type == "work_order") & (AuditLog.entity_id == work_order.uuid),
+        # Work order items - check new_values for INSERT/UPDATE
+        (AuditLog.entity_type == "work_order_item")
+        & (AuditLog.new_values.op("@>")(work_order_id_json)),
+        # Work order items - check old_values for DELETE
+        (AuditLog.entity_type == "work_order_item")
+        & (AuditLog.old_values.op("@>")(work_order_id_json)),
+    )
+
+    result = await db_session.execute(
+        select(AuditLog)
+        .where(combined_filter)
+        .order_by(AuditLog.created_at.desc())
+    )
+    records = result.scalars().all()
+
+    # Should have at least: 1 work order INSERT + 1 item INSERT
+    assert len(records) >= 2
+
+    # Find the work order item INSERT record
+    item_inserts = [
+        r for r in records
+        if r.entity_type == "work_order_item" and r.action == "INSERT"
+    ]
+    assert len(item_inserts) >= 1
+    assert item_inserts[0].new_values["item_number"] == 1
+    assert item_inserts[0].new_values["work_order_id"] == work_order.id
+
+
+async def test_combined_audit_returns_work_order_item_update(
+    db_session, test_work_order_for_combined, cleanup_retrieval_work_orders
+):
+    """Combined audit endpoint returns UPDATE records for work order items."""
+    import json
+    from sqlalchemy import cast, or_
+    from sqlalchemy.dialects.postgresql import JSONB
+
+    from models.audit_log import AuditLog
+    from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
+
+    work_order = test_work_order_for_combined
+
+    # Create and then update a work order item
+    item = WorkOrderItem(
+        work_order_id=work_order.id,
+        item_number=1,
+        status=WorkOrderItemStatus.OPEN,
+        discrepancy="Original discrepancy",
+        corrective_action="Original action",
+        created_by="retrieval-test-user",
+    )
+    db_session.add(item)
+    await db_session.commit()
+    await db_session.refresh(item)
+
+    # Update the item
+    item.status = WorkOrderItemStatus.IN_PROGRESS
+    item.discrepancy = "Updated discrepancy"
+    await db_session.commit()
+
+    # Query using combined logic
+    work_order_id_json = cast(
+        json.dumps({"work_order_id": work_order.id}), JSONB
+    )
+
+    combined_filter = or_(
+        (AuditLog.entity_type == "work_order") & (AuditLog.entity_id == work_order.uuid),
+        (AuditLog.entity_type == "work_order_item")
+        & (AuditLog.new_values.op("@>")(work_order_id_json)),
+        (AuditLog.entity_type == "work_order_item")
+        & (AuditLog.old_values.op("@>")(work_order_id_json)),
+    )
+
+    result = await db_session.execute(
+        select(AuditLog)
+        .where(combined_filter)
+        .order_by(AuditLog.created_at.desc())
+    )
+    records = result.scalars().all()
+
+    # Find the work order item UPDATE record
+    item_updates = [
+        r for r in records
+        if r.entity_type == "work_order_item" and r.action == "UPDATE"
+    ]
+    assert len(item_updates) >= 1
+    assert "status" in item_updates[0].changed_fields
+    assert item_updates[0].old_values["status"] == "open"
+    assert item_updates[0].new_values["status"] == "in_progress"
+
+
+async def test_combined_audit_returns_deleted_item_changes(
+    db_session, test_work_order_for_combined, cleanup_retrieval_work_orders
+):
+    """Combined audit endpoint returns DELETE records for work order items."""
+    import json
+    from sqlalchemy import cast, or_
+    from sqlalchemy.dialects.postgresql import JSONB
+
+    from models.audit_log import AuditLog
+    from models.work_order_item import WorkOrderItem
+
+    work_order = test_work_order_for_combined
+
+    # Create and then delete a work order item
+    item = WorkOrderItem(
+        work_order_id=work_order.id,
+        item_number=1,
+        discrepancy="Item to be deleted",
+        corrective_action="Will be deleted",
+        created_by="retrieval-test-user",
+    )
+    db_session.add(item)
+    await db_session.commit()
+    await db_session.refresh(item)
+
+    item_uuid = item.uuid
+
+    # Delete the item
+    await db_session.delete(item)
+    await db_session.commit()
+
+    # Query using combined logic
+    work_order_id_json = cast(
+        json.dumps({"work_order_id": work_order.id}), JSONB
+    )
+
+    combined_filter = or_(
+        (AuditLog.entity_type == "work_order") & (AuditLog.entity_id == work_order.uuid),
+        (AuditLog.entity_type == "work_order_item")
+        & (AuditLog.new_values.op("@>")(work_order_id_json)),
+        (AuditLog.entity_type == "work_order_item")
+        & (AuditLog.old_values.op("@>")(work_order_id_json)),
+    )
+
+    result = await db_session.execute(
+        select(AuditLog)
+        .where(combined_filter)
+        .order_by(AuditLog.created_at.desc())
+    )
+    records = result.scalars().all()
+
+    # Find the work order item DELETE record
+    item_deletes = [
+        r for r in records
+        if r.entity_type == "work_order_item" and r.action == "DELETE"
+    ]
+    assert len(item_deletes) >= 1
+    assert item_deletes[0].entity_id == item_uuid
+    assert item_deletes[0].old_values is not None
+    assert item_deletes[0].old_values["discrepancy"] == "Item to be deleted"
+    assert item_deletes[0].old_values["work_order_id"] == work_order.id
+    assert item_deletes[0].new_values is None

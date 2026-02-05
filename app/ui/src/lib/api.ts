@@ -299,6 +299,13 @@ export const auditApi = {
     pageSize = 50
   ): Promise<PaginatedAuditResponse> =>
     fetchApi(`/audit/${entityType}/${entityId}?page=${page}&page_size=${pageSize}`),
+
+  getWorkOrderCombinedHistory: (
+    workOrderId: string,
+    page = 1,
+    pageSize = 50
+  ): Promise<PaginatedAuditResponse> =>
+    fetchApi(`/audit/work-order/${workOrderId}/combined?page=${page}&page_size=${pageSize}`),
 };
 
 export { ApiError };

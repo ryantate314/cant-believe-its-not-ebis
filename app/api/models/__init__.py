@@ -17,7 +17,7 @@ def register_all_audit_listeners() -> None:
     Call this function once at application startup.
     """
     register_audit_listeners(WorkOrder)
-    # Add more models here as they are created
+    register_audit_listeners(WorkOrderItem)
 
 
 __all__ = [

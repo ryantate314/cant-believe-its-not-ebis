@@ -32,6 +32,8 @@ class AuditRecordResponse(BaseModel):
     session_id: str | None
     ip_address: str | None
     created_at: datetime
+    # Optional context for work order items
+    item_number: int | None = None
 
 
 class PaginatedAuditResponse(BaseModel):

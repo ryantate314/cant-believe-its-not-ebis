@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuditHistory } from "@/hooks/use-audit-history";
+import { useAuditHistory, useWorkOrderCombinedAuditHistory } from "@/hooks/use-audit-history";
 import type { AuditRecord, AuditAction } from "@/types/audit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,14 @@ const actionConfig: Record<
   UPDATE: { label: "Updated", variant: "secondary" },
   DELETE: { label: "Deleted", variant: "destructive" },
 };
+
+function getEntityLabel(record: AuditRecord): string | null {
+  if (record.entity_type === "work_order_item") {
+    const itemNum = record.item_number ?? record.new_values?.item_number ?? record.old_values?.item_number;
+    return itemNum ? `Item #${itemNum}` : "Work Item";
+  }
+  return null;
+}
 
 function formatFieldName(field: string): string {
   return field
@@ -45,6 +53,7 @@ function AuditRecordCard({ record }: { record: AuditRecord }) {
   const config = actionConfig[record.action];
   const timestamp = new Date(record.created_at).toLocaleString();
   const userName = record.user_id || "System";
+  const entityLabel = getEntityLabel(record);
 
   return (
     <Card className="mb-4">
@@ -52,6 +61,9 @@ function AuditRecordCard({ record }: { record: AuditRecord }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Badge variant={config.variant}>{config.label}</Badge>
+            {entityLabel && (
+              <Badge variant="outline">{entityLabel}</Badge>
+            )}
             <span className="text-sm text-muted-foreground">{timestamp}</span>
           </div>
           <span className="text-sm font-medium">{userName}</span>
@@ -60,12 +72,12 @@ function AuditRecordCard({ record }: { record: AuditRecord }) {
       <CardContent>
         {record.action === "INSERT" && record.new_values && (
           <div className="text-sm text-muted-foreground">
-            Record created
+            {entityLabel ? `${entityLabel} added` : "Record created"}
           </div>
         )}
         {record.action === "DELETE" && (
           <div className="text-sm text-muted-foreground">
-            Record deleted
+            {entityLabel ? `${entityLabel} removed` : "Record deleted"}
           </div>
         )}
         {record.action === "UPDATE" && record.changed_fields && record.changed_fields.length > 0 && (
@@ -125,6 +137,78 @@ export function AuditHistory({ entityType, entityId }: AuditHistoryProps) {
   const { auditHistory, isLoading, error } = useAuditHistory(
     entityType,
     entityId,
+    page
+  );
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-muted-foreground">
+            Failed to load audit history. Please try again.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!auditHistory || auditHistory.items.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-muted-foreground">No change history found.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div>
+      <div className="space-y-0">
+        {auditHistory.items.map((record) => (
+          <AuditRecordCard key={record.id} record={record} />
+        ))}
+      </div>
+
+      <div className="mt-6 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing {auditHistory.items.length} of {auditHistory.total} changes
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!auditHistory.has_next}
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface WorkOrderAuditHistoryProps {
+  workOrderId: string;
+}
+
+export function WorkOrderAuditHistory({ workOrderId }: WorkOrderAuditHistoryProps) {
+  const [page, setPage] = useState(1);
+  const { auditHistory, isLoading, error } = useWorkOrderCombinedAuditHistory(
+    workOrderId,
     page
   );
 

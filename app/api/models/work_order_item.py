@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 import enum
 
 from core.database import Base
+from core.audit import AuditableMixin
 
 
 class WorkOrderItemStatus(str, enum.Enum):
@@ -18,7 +19,9 @@ class WorkOrderItemStatus(str, enum.Enum):
     FINISHED = "finished"
 
 
-class WorkOrderItem(Base):
+class WorkOrderItem(Base, AuditableMixin):
+    """Work order item with audit tracking."""
+
     __tablename__ = "work_order_item"
 
     id: Mapped[int] = mapped_column(primary_key=True)
