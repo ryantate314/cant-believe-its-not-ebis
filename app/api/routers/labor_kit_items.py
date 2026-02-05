@@ -48,7 +48,7 @@ def item_to_response(item, kit_uuid: UUID) -> LaborKitItemResponse:
     )
 
 
-@router.get("", response_model=LaborKitItemListResponse)
+@router.get("", response_model=LaborKitItemListResponse, operation_id="listLaborKitItems")
 async def list_labor_kit_items(
     kit_id: UUID,
     sort_by: Literal["item_number", "category", "hours_estimate"]
@@ -71,7 +71,7 @@ async def list_labor_kit_items(
     )
 
 
-@router.post("", response_model=LaborKitItemResponse, status_code=201)
+@router.post("", response_model=LaborKitItemResponse, status_code=201, operation_id="createLaborKitItem")
 async def create_new_labor_kit_item(
     kit_id: UUID,
     item_in: LaborKitItemCreate,
@@ -84,7 +84,7 @@ async def create_new_labor_kit_item(
     return item_to_response(item, kit_id)
 
 
-@router.get("/{item_id}", response_model=LaborKitItemResponse)
+@router.get("/{item_id}", response_model=LaborKitItemResponse, operation_id="getLaborKitItem")
 async def get_labor_kit_item(
     kit_id: UUID,
     item_id: UUID,
@@ -102,7 +102,7 @@ async def get_labor_kit_item(
     return item_to_response(item, kit_id)
 
 
-@router.put("/{item_id}", response_model=LaborKitItemResponse)
+@router.put("/{item_id}", response_model=LaborKitItemResponse, operation_id="updateLaborKitItem")
 async def update_existing_labor_kit_item(
     kit_id: UUID,
     item_id: UUID,
@@ -124,7 +124,7 @@ async def update_existing_labor_kit_item(
     return item_to_response(item, kit_id)
 
 
-@router.delete("/{item_id}", status_code=204)
+@router.delete("/{item_id}", status_code=204, operation_id="deleteLaborKitItem")
 async def delete_existing_labor_kit_item(
     kit_id: UUID,
     item_id: UUID,

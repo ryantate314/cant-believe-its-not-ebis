@@ -23,9 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { workOrdersApi, citiesApi } from "@/lib/api";
+import {
+  listWorkOrders,
+  listCities,
+} from "@/lib/api";
+import type { WorkOrderResponse, CityResponse, WorkOrderStatus, ListWorkOrdersParams } from "@/lib/api";
 import { useSortParams } from "@/hooks/use-sort-params";
-import type { WorkOrder, WorkOrderStatus, City } from "@/types";
 
 const STATUS_COLORS: Record<WorkOrderStatus, string> = {
   created: "bg-gray-100 text-gray-800",
@@ -52,7 +55,7 @@ const STATUS_LABELS: Record<WorkOrderStatus, string> = {
 };
 
 type FetchState = {
-  data: WorkOrder[];
+  data: WorkOrderResponse[];
   total: number;
   loading: boolean;
   fetchKey: string;
@@ -61,7 +64,7 @@ type FetchState = {
 export function WorkOrderList() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [cities, setCities] = useState<City[]>([]);
+  const [cities, setCities] = useState<CityResponse[]>([]);
   const [fetchState, setFetchState] = useState<FetchState>({
     data: [],
     total: 0,
@@ -89,7 +92,7 @@ export function WorkOrderList() {
   const total = fetchState.total;
 
   useEffect(() => {
-    citiesApi.list().then((data) => setCities(data.items));
+    listCities().then((response) => setCities(response.data.items));
   }, []);
 
   useEffect(() => {
@@ -99,20 +102,19 @@ export function WorkOrderList() {
 
     let cancelled = false;
 
-    workOrdersApi
-      .list({
+    listWorkOrders({
         city_id: cityId,
         page,
         search: search || undefined,
-        status: status || undefined,
-        sort_by: sortBy || undefined,
+        status: status as ListWorkOrdersParams["status"],
+        sort_by: sortBy as ListWorkOrdersParams["sort_by"],
         sort_order: sortOrder,
       })
-      .then((data) => {
+      .then((response) => {
         if (!cancelled) {
           setFetchState({
-            data: data.items,
-            total: data.total,
+            data: response.data.items,
+            total: response.data.total,
             loading: false,
             fetchKey: currentFetchKey,
           });

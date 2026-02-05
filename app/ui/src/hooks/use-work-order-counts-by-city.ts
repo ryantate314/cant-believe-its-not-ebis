@@ -1,13 +1,12 @@
 import useSWR, { mutate } from "swr";
-import { dashboardApi } from "@/lib/api";
-import type { CityWorkOrderCount } from "@/types/dashboard";
+import { getWorkOrderCountsByCity, type CityWorkOrderCount } from "@/lib/api";
 
 export function useWorkOrderCountsByCity() {
-  const { data, error, isLoading } = useSWR<CityWorkOrderCount[]>(
+  const { data, error, isLoading } = useSWR(
     "dashboard:work-order-counts-by-city",
     async () => {
-      const response = await dashboardApi.getWorkOrderCountsByCity();
-      return response.items;
+      const response = await getWorkOrderCountsByCity();
+      return response.data.items;
     }
   );
 

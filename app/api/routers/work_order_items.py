@@ -49,7 +49,7 @@ def item_to_response(item, work_order_uuid: UUID) -> WorkOrderItemResponse:
     )
 
 
-@router.get("", response_model=WorkOrderItemListResponse)
+@router.get("", response_model=WorkOrderItemListResponse, operation_id="listWorkOrderItems")
 async def list_work_order_items(
     work_order_id: UUID,
     sort_by: Literal["item_number", "status", "category", "hours_estimate"]
@@ -72,7 +72,7 @@ async def list_work_order_items(
     )
 
 
-@router.post("", response_model=WorkOrderItemResponse, status_code=201)
+@router.post("", response_model=WorkOrderItemResponse, status_code=201, operation_id="createWorkOrderItem")
 async def create_new_work_order_item(
     work_order_id: UUID,
     item_in: WorkOrderItemCreate,
@@ -85,7 +85,7 @@ async def create_new_work_order_item(
     return item_to_response(item, work_order_id)
 
 
-@router.get("/{item_id}", response_model=WorkOrderItemResponse)
+@router.get("/{item_id}", response_model=WorkOrderItemResponse, operation_id="getWorkOrderItem")
 async def get_work_order_item(
     work_order_id: UUID,
     item_id: UUID,
@@ -103,7 +103,7 @@ async def get_work_order_item(
     return item_to_response(item, work_order_id)
 
 
-@router.put("/{item_id}", response_model=WorkOrderItemResponse)
+@router.put("/{item_id}", response_model=WorkOrderItemResponse, operation_id="updateWorkOrderItem")
 async def update_existing_work_order_item(
     work_order_id: UUID,
     item_id: UUID,
@@ -125,7 +125,7 @@ async def update_existing_work_order_item(
     return item_to_response(item, work_order_id)
 
 
-@router.delete("/{item_id}", status_code=204)
+@router.delete("/{item_id}", status_code=204, operation_id="deleteWorkOrderItem")
 async def delete_existing_work_order_item(
     work_order_id: UUID,
     item_id: UUID,

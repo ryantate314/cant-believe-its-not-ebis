@@ -1,4 +1,4 @@
-.PHONY: ui-run api-run api-test api-test-cov ui-test ui-test-cov ui-test-e2e ui-test-e2e-critical test
+.PHONY: ui-run api-run api-generate api-test api-test-cov ui-test ui-test-cov ui-test-e2e ui-test-e2e-critical test
 
 # Flyway version
 FLYWAY_VERSION ?= 11
@@ -39,6 +39,9 @@ api-run:
 
 ui-run:
 	cd app/ui && yarn dev
+
+api-generate:
+	cd app/ui && yarn generate:api
 
 terraform-apply:
 	terraform -chdir=infrastructure apply --var-file=config/dev.tfvars

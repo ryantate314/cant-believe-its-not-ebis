@@ -16,8 +16,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { laborKitsApi } from "@/lib/api";
-import type { LaborKit } from "@/types";
+import {
+  getLaborKit,
+  updateLaborKit,
+} from "@/lib/api";
+import type { LaborKitResponse } from "@/lib/api";
 import { LABOR_KIT_CATEGORIES } from "@/types/labor-kit";
 import { LaborKitItemList } from "./labor-kit-item-list";
 
@@ -27,7 +30,7 @@ interface LaborKitDetailProps {
 
 export function LaborKitDetail({ kitId }: LaborKitDetailProps) {
   const router = useRouter();
-  const [kit, setKit] = useState<LaborKit | null>(null);
+  const [kit, setKit] = useState<LaborKitResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,7 +43,8 @@ export function LaborKitDetail({ kitId }: LaborKitDetailProps) {
   const fetchKit = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await laborKitsApi.get(kitId);
+      const response = await getLaborKit(kitId);
+      const data = response.data;
       setKit(data);
       setFormData({
         name: data.name,
@@ -60,7 +64,7 @@ export function LaborKitDetail({ kitId }: LaborKitDetailProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await laborKitsApi.update(kitId, {
+      await updateLaborKit(kitId, {
         ...formData,
         updated_by: "system",
       });

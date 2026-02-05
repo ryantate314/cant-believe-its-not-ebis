@@ -1,8 +1,7 @@
-import type { City, WorkOrder, AircraftBrief } from "@/types/work-order";
-import type { WorkOrderItem } from "@/types/work-order-item";
-import type { Aircraft } from "@/types/aircraft";
+import type { CityResponse, WorkOrderResponse, AircraftBrief, AircraftResponse, WorkOrderItemResponse } from "@/lib/api";
 
-export const mockCities: City[] = [
+// Full city objects for list operations (includes is_active)
+export const mockCities: CityResponse[] = [
   {
     id: "city-uuid-1",
     code: "KTYS",
@@ -26,7 +25,7 @@ export const mockAircraftBrief: AircraftBrief = {
   year_built: 2020,
 };
 
-export const mockAircraft: Aircraft[] = [
+export const mockAircraft: AircraftResponse[] = [
   {
     id: "aircraft-uuid-1",
     registration_number: "N12345",
@@ -75,7 +74,7 @@ export const mockAircraft: Aircraft[] = [
   },
 ];
 
-export const mockWorkOrder: WorkOrder = {
+export const mockWorkOrder: WorkOrderResponse = {
   id: "wo-uuid-1",
   work_order_number: "KTYS00001-01-2026",
   sequence_number: 1,
@@ -103,7 +102,7 @@ export const mockWorkOrder: WorkOrder = {
   item_count: 2,
 };
 
-export const mockWorkOrders: WorkOrder[] = [
+export const mockWorkOrders: WorkOrderResponse[] = [
   mockWorkOrder,
   {
     ...mockWorkOrder,
@@ -116,7 +115,7 @@ export const mockWorkOrders: WorkOrder[] = [
   },
 ];
 
-export const mockWorkOrderItem: WorkOrderItem = {
+export const mockWorkOrderItem: WorkOrderItemResponse = {
   id: "item-uuid-1",
   work_order_id: "wo-uuid-1",
   item_number: 1,
@@ -127,7 +126,7 @@ export const mockWorkOrderItem: WorkOrderItem = {
   category: "Powerplant",
   sub_category: "Engine",
   ata_code: "71-10",
-  hours_estimate: 4.5,
+  hours_estimate: "4.5",
   billing_method: "hourly",
   flat_rate: null,
   department: "Engine Shop",
@@ -139,7 +138,7 @@ export const mockWorkOrderItem: WorkOrderItem = {
   updated_at: "2026-01-15T11:00:00Z",
 };
 
-export const mockWorkOrderItems: WorkOrderItem[] = [
+export const mockWorkOrderItems: WorkOrderItemResponse[] = [
   mockWorkOrderItem,
   {
     ...mockWorkOrderItem,
@@ -149,7 +148,7 @@ export const mockWorkOrderItems: WorkOrderItem[] = [
     corrective_action: "Replaced antenna connector",
     category: "Avionics",
     ata_code: "23-10",
-    hours_estimate: 2.0,
+    hours_estimate: "2.0",
     department: "Avionics",
   },
 ];

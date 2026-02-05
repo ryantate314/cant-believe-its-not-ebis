@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { aircraftApi } from "@/lib/api";
-import type { Aircraft } from "@/types";
+import {
+  getAircraft,
+  deleteAircraft,
+} from "@/lib/api";
+import type { AircraftResponse } from "@/lib/api";
 
 interface AircraftDetailProps {
   aircraftId: string;
@@ -15,15 +18,14 @@ interface AircraftDetailProps {
 
 export function AircraftDetail({ aircraftId }: AircraftDetailProps) {
   const router = useRouter();
-  const [aircraft, setAircraft] = useState<Aircraft | null>(null);
+  const [aircraft, setAircraft] = useState<AircraftResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    aircraftApi
-      .get(aircraftId)
-      .then(setAircraft)
+    getAircraft(aircraftId)
+      .then((response) => setAircraft(response.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [aircraftId]);
@@ -31,7 +33,7 @@ export function AircraftDetail({ aircraftId }: AircraftDetailProps) {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await aircraftApi.delete(aircraftId);
+      await deleteAircraft(aircraftId);
       router.push("/aircraft");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete");

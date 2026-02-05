@@ -80,6 +80,30 @@ infrastructure/   # Terraform Azure configuration
 - **FastAPI is the backend:** All database operations, business logic, and data access happen in the FastAPI backend (port 8000)
 - **Next.js API routes:** Use only as a pass-through layer to the FastAPI backend
 
+## Backend Development Conventions
+
+### API Endpoint Naming
+
+Every FastAPI endpoint **must** include an explicit `operation_id` parameter. This controls the generated TypeScript SDK function names. Without it, Orval generates unwieldy names like `useListWorkOrdersApiV1WorkOrdersGet`.
+
+**Naming convention:** Use camelCase with the pattern `{verb}{Resource}`:
+- `listWorkOrders`, `getWorkOrder`, `createWorkOrder`, `updateWorkOrder`, `deleteWorkOrder`
+- `listWorkOrderItems`, `getWorkOrderItem`, `createWorkOrderItem`, etc.
+
+**Example:**
+```python
+@router.get("", response_model=WorkOrderListResponse, operation_id="listWorkOrders")
+async def list_work_orders(...):
+
+@router.get("/{work_order_id}", response_model=WorkOrderResponse, operation_id="getWorkOrder")
+async def get_work_order(...):
+
+@router.post("", response_model=WorkOrderResponse, status_code=201, operation_id="createWorkOrder")
+async def create_new_work_order(...):
+```
+
+This produces clean SDK names: `useListWorkOrders`, `useGetWorkOrder`, `createWorkOrder`, etc.
+
 ## Frontend Development Conventions
 
 - **Mobile-first design:** Build UI mobile-first with responsive breakpoints for tablets and desktops; ensure all features are usable on touch devices
@@ -120,6 +144,28 @@ infrastructure/   # Terraform Azure configuration
 - **Feature components:** user interactions, form submissions, data display
 - **API client:** error handling, request formatting
 - **E2E:** critical user workflows (create/edit/delete work orders)
+
+## API SDK Generation
+
+The frontend TypeScript API client is auto-generated from FastAPI's OpenAPI schema using **orval**.
+
+**When to regenerate:**
+- After adding/modifying FastAPI endpoints
+- After changing Pydantic request/response schemas
+- After adding new routers
+
+**How to regenerate:**
+```bash
+make api-run      # Start FastAPI (in one terminal)
+make api-generate # Generate TypeScript SDK (in another terminal)
+```
+
+**Files:**
+- `app/ui/src/lib/api/generated/` - Generated API functions, SWR hooks, and types (committed to git)
+- `app/ui/src/lib/api/custom-fetch.ts` - Custom fetch implementation with error handling
+- `app/ui/orval.config.ts` - Generation configuration
+
+**Important:** Always commit regenerated files when changing backend API contracts.
 
 ## Prerequisites
 

@@ -9,7 +9,9 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get(
-    "/work-order-counts-by-city", response_model=WorkOrderCountsByCityResponse
+    "/work-order-counts-by-city",
+    response_model=WorkOrderCountsByCityResponse,
+    operation_id="getWorkOrderCountsByCity",
 )
 async def get_work_order_counts_by_city(
     db: AsyncSession = Depends(get_db),

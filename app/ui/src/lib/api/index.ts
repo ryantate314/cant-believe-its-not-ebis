@@ -1,8 +1,14 @@
-export { ApiError } from "./base";
-export { citiesApi } from "./cities";
-export { workOrdersApi } from "./work-orders";
-export { workOrderItemsApi } from "./work-order-items";
-export { laborKitsApi } from "./labor-kits";
-export { laborKitItemsApi } from "./labor-kit-items";
-export { aircraftApi } from "./aircraft";
-export { dashboardApi } from "./dashboard";
+// Custom fetch utilities
+export { ApiError } from "./custom-fetch";
+
+// Generated API functions and SWR hooks
+export * from "./generated/work-orders/work-orders";
+export * from "./generated/work-order-items/work-order-items";
+export * from "./generated/aircraft/aircraft";
+export * from "./generated/cities/cities";
+export * from "./generated/labor-kits/labor-kits";
+export * from "./generated/labor-kit-items/labor-kit-items";
+export * from "./generated/dashboard/dashboard";
+
+// Generated types
+export * from "./generated/schemas";

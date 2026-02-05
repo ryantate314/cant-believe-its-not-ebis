@@ -29,10 +29,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { workOrderItemsApi } from "@/lib/api";
+import {
+  updateWorkOrderItem,
+  deleteWorkOrderItem,
+} from "@/lib/api";
+import type { WorkOrderItemResponse, WorkOrderItemStatus, WorkOrderItemUpdate } from "@/lib/api";
 import { useWorkOrderItem, mutateWorkOrderItem } from "@/hooks/use-work-order-item";
 import { useWorkOrderItems } from "@/hooks/use-work-order-items";
-import type { WorkOrderItem, WorkOrderItemStatus, WorkOrderItemUpdateInput } from "@/types";
 
 const STATUS_COLORS: Record<WorkOrderItemStatus, string> = {
   open: "bg-green-100 text-green-800",
@@ -73,7 +76,7 @@ interface FormData {
   status: WorkOrderItemStatus;
 }
 
-function itemToFormData(item: WorkOrderItem): FormData {
+function itemToFormData(item: WorkOrderItemResponse): FormData {
   return {
     discrepancy: item.discrepancy || "",
     corrective_action: item.corrective_action || "",
@@ -177,11 +180,11 @@ export function WorkOrderItemDetail({
     updateField("status", newStatus);
 
     try {
-      const updated = await workOrderItemsApi.update(workOrderId, itemId, {
+      const response = await updateWorkOrderItem(workOrderId, itemId, {
         status: newStatus,
         updated_by: "system",
       });
-      mutateWorkOrderItem(workOrderId, itemId, updated);
+      mutateWorkOrderItem(workOrderId, itemId, response.data);
       // Update originalFormData so the form doesn't show as dirty for this change
       setOriginalFormData((prev) => (prev ? { ...prev, status: newStatus } : null));
       toast.success(`Status updated to ${STATUS_LABELS[newStatus]}`);
@@ -198,7 +201,7 @@ export function WorkOrderItemDetail({
 
     setIsSaving(true);
     try {
-      const updateData: WorkOrderItemUpdateInput = {
+      const updateData: WorkOrderItemUpdate = {
         discrepancy: formData.discrepancy || undefined,
         corrective_action: formData.corrective_action || undefined,
         notes: formData.notes || undefined,
@@ -219,12 +222,12 @@ export function WorkOrderItemDetail({
         updated_by: "system",
       };
 
-      const updated = await workOrderItemsApi.update(
+      const response = await updateWorkOrderItem(
         workOrderId,
         itemId,
         updateData
       );
-      mutateWorkOrderItem(workOrderId, itemId, updated);
+      mutateWorkOrderItem(workOrderId, itemId, response.data);
       setOriginalFormData(formData);
       toast.success("Changes saved successfully");
     } catch (err) {
@@ -248,7 +251,7 @@ export function WorkOrderItemDetail({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await workOrderItemsApi.delete(workOrderId, itemId);
+      await deleteWorkOrderItem(workOrderId, itemId);
       toast.success("Item deleted successfully");
       router.push(`/workorder/${workOrderId}/item`);
     } catch (err) {

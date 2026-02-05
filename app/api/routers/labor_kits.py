@@ -39,7 +39,7 @@ def kit_to_response(kit) -> LaborKitResponse:
     )
 
 
-@router.get("", response_model=LaborKitListResponse)
+@router.get("", response_model=LaborKitListResponse, operation_id="listLaborKits")
 async def list_labor_kits(
     sort_by: Literal["name", "category", "is_active", "created_at"]
     | None = Query(None, description="Column to sort by"),
@@ -57,7 +57,7 @@ async def list_labor_kits(
     )
 
 
-@router.post("", response_model=LaborKitResponse, status_code=201)
+@router.post("", response_model=LaborKitResponse, status_code=201, operation_id="createLaborKit")
 async def create_new_labor_kit(
     kit_in: LaborKitCreate,
     db: AsyncSession = Depends(get_db),
@@ -67,7 +67,7 @@ async def create_new_labor_kit(
     return kit_to_response(kit)
 
 
-@router.get("/{kit_id}", response_model=LaborKitResponse)
+@router.get("/{kit_id}", response_model=LaborKitResponse, operation_id="getLaborKit")
 async def get_labor_kit(
     kit_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -79,7 +79,7 @@ async def get_labor_kit(
     return kit_to_response(kit)
 
 
-@router.put("/{kit_id}", response_model=LaborKitResponse)
+@router.put("/{kit_id}", response_model=LaborKitResponse, operation_id="updateLaborKit")
 async def update_existing_labor_kit(
     kit_id: UUID,
     kit_in: LaborKitUpdate,
@@ -92,7 +92,7 @@ async def update_existing_labor_kit(
     return kit_to_response(kit)
 
 
-@router.delete("/{kit_id}", status_code=204)
+@router.delete("/{kit_id}", status_code=204, operation_id="deleteLaborKit")
 async def delete_existing_labor_kit(
     kit_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -103,7 +103,7 @@ async def delete_existing_labor_kit(
         raise HTTPException(status_code=404, detail="Labor kit not found")
 
 
-@router.post("/{kit_id}/apply/{work_order_id}", response_model=ApplyLaborKitResponse)
+@router.post("/{kit_id}/apply/{work_order_id}", response_model=ApplyLaborKitResponse, operation_id="applyLaborKit")
 async def apply_kit_to_work_order(
     kit_id: UUID,
     work_order_id: UUID,

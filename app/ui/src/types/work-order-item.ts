@@ -1,76 +1,16 @@
-export type WorkOrderItemStatus =
-  | "open"
-  | "waiting_for_parts"
-  | "in_progress"
-  | "tech_review"
-  | "admin_review"
-  | "finished";
+// Re-export generated types
+export type {
+  WorkOrderItemResponse as WorkOrderItem,
+  WorkOrderItemCreate as WorkOrderItemCreateInput,
+  WorkOrderItemUpdate as WorkOrderItemUpdateInput,
+  WorkOrderItemListResponse,
+  WorkOrderItemStatus,
+} from "@/lib/api";
 
-export interface WorkOrderItem {
-  id: string;
-  work_order_id: string;
-  item_number: number;
-  status: WorkOrderItemStatus;
-  discrepancy: string | null;
-  corrective_action: string | null;
-  notes: string | null;
-  category: string | null;
-  sub_category: string | null;
-  ata_code: string | null;
-  hours_estimate: number | null;
-  billing_method: string;
-  flat_rate: number | null;
-  department: string | null;
-  do_not_bill: boolean;
-  enable_rii: boolean;
+// Import for display helper types
+import type { WorkOrderItemStatus } from "@/lib/api";
 
-  // Audit
-  created_by: string;
-  updated_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface WorkOrderItemListResponse {
-  items: WorkOrderItem[];
-  total: number;
-}
-
-export interface WorkOrderItemCreateInput {
-  created_by: string;
-  status?: WorkOrderItemStatus;
-  discrepancy?: string;
-  corrective_action?: string;
-  notes?: string;
-  category?: string;
-  sub_category?: string;
-  ata_code?: string;
-  hours_estimate?: number;
-  billing_method?: string;
-  flat_rate?: number;
-  department?: string;
-  do_not_bill?: boolean;
-  enable_rii?: boolean;
-}
-
-export interface WorkOrderItemUpdateInput {
-  status?: WorkOrderItemStatus;
-  discrepancy?: string;
-  corrective_action?: string;
-  notes?: string;
-  category?: string;
-  sub_category?: string;
-  ata_code?: string;
-  hours_estimate?: number;
-  billing_method?: string;
-  flat_rate?: number;
-  department?: string;
-  do_not_bill?: boolean;
-  enable_rii?: boolean;
-  updated_by?: string;
-}
-
-// Status display helpers
+// Status display helpers (not generated - UI-specific)
 export const WORK_ORDER_ITEM_STATUS_LABELS: Record<WorkOrderItemStatus, string> = {
   open: "Open",
   waiting_for_parts: "Waiting for Parts",

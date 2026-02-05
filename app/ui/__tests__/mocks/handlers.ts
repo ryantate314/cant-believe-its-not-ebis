@@ -5,8 +5,7 @@ import {
   mockWorkOrders,
   mockWorkOrderItems,
 } from "./data";
-import type { WorkOrder, AircraftBrief } from "@/types/work-order";
-import type { WorkOrderItem } from "@/types/work-order-item";
+import type { WorkOrderResponse, AircraftBrief, WorkOrderItemResponse } from "@/lib/api";
 
 // Track created items for sequence number generation
 let workOrderSequence = mockWorkOrders.length + 1;
@@ -112,7 +111,7 @@ export const handlers = [
     };
 
     const now = new Date().toISOString();
-    const newWorkOrder: WorkOrder = {
+    const newWorkOrder: WorkOrderResponse = {
       id: `wo-uuid-${Date.now()}`,
       work_order_number: `${city.code}${String(workOrderSequence).padStart(5, "0")}-01-2026`,
       sequence_number: workOrderSequence++,
@@ -122,8 +121,8 @@ export const handlers = [
         name: city.name,
       },
       aircraft: aircraftBrief,
-      work_order_type: (body.work_order_type as WorkOrder["work_order_type"]) || "work_order",
-      status: (body.status as WorkOrder["status"]) || "created",
+      work_order_type: (body.work_order_type as WorkOrderResponse["work_order_type"]) || "work_order",
+      status: (body.status as WorkOrderResponse["status"]) || "created",
       status_notes: (body.status_notes as string) || null,
       customer_name: (body.customer_name as string) || null,
       customer_po_number: (body.customer_po_number as string) || null,
@@ -132,7 +131,7 @@ export const handlers = [
       completed_date: null,
       lead_technician: (body.lead_technician as string) || null,
       sales_person: (body.sales_person as string) || null,
-      priority: (body.priority as WorkOrder["priority"]) || "normal",
+      priority: (body.priority as WorkOrderResponse["priority"]) || "normal",
       created_by: body.created_by as string,
       updated_by: null,
       created_at: now,
@@ -153,7 +152,7 @@ export const handlers = [
     }
 
     const body = (await request.json()) as Record<string, unknown>;
-    const updated: WorkOrder = {
+    const updated: WorkOrderResponse = {
       ...workOrder,
       ...body,
       updated_at: new Date().toISOString(),
@@ -225,20 +224,20 @@ export const handlers = [
     const body = (await request.json()) as Record<string, unknown>;
     const now = new Date().toISOString();
 
-    const newItem: WorkOrderItem = {
+    const newItem: WorkOrderItemResponse = {
       id: `item-uuid-${Date.now()}`,
       work_order_id: params.workOrderId as string,
       item_number: itemSequence++,
-      status: (body.status as WorkOrderItem["status"]) || "open",
+      status: (body.status as WorkOrderItemResponse["status"]) || "open",
       discrepancy: (body.discrepancy as string) || null,
       corrective_action: (body.corrective_action as string) || null,
       notes: (body.notes as string) || null,
       category: (body.category as string) || null,
       sub_category: (body.sub_category as string) || null,
       ata_code: (body.ata_code as string) || null,
-      hours_estimate: (body.hours_estimate as number) || null,
+      hours_estimate: body.hours_estimate != null ? String(body.hours_estimate) : null,
       billing_method: (body.billing_method as string) || "hourly",
-      flat_rate: (body.flat_rate as number) || null,
+      flat_rate: body.flat_rate != null ? String(body.flat_rate) : null,
       department: (body.department as string) || null,
       do_not_bill: (body.do_not_bill as boolean) || false,
       enable_rii: (body.enable_rii as boolean) || false,
@@ -269,7 +268,7 @@ export const handlers = [
     }
 
     const body = (await request.json()) as Record<string, unknown>;
-    const updated: WorkOrderItem = {
+    const updated: WorkOrderItemResponse = {
       ...item,
       ...body,
       updated_at: new Date().toISOString(),

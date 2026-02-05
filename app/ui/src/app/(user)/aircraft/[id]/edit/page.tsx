@@ -4,20 +4,19 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AircraftForm } from "@/components/features/aircraft";
 import { Skeleton } from "@/components/ui/skeleton";
-import { aircraftApi } from "@/lib/api";
-import type { Aircraft } from "@/types";
+import { getAircraft } from "@/lib/api";
+import type { AircraftResponse } from "@/lib/api";
 
 export default function EditAircraftPage() {
   const params = useParams();
   const aircraftId = params.id as string;
-  const [aircraft, setAircraft] = useState<Aircraft | null>(null);
+  const [aircraft, setAircraft] = useState<AircraftResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    aircraftApi
-      .get(aircraftId)
-      .then(setAircraft)
+    getAircraft(aircraftId)
+      .then((response) => setAircraft(response.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [aircraftId]);

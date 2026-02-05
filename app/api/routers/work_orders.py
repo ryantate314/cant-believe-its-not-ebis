@@ -62,7 +62,7 @@ def work_order_to_response(wo) -> WorkOrderResponse:
     )
 
 
-@router.get("", response_model=WorkOrderListResponse)
+@router.get("", response_model=WorkOrderListResponse, operation_id="listWorkOrders")
 async def list_work_orders(
     city_id: UUID = Query(..., description="City UUID to filter by"),
     page: int = Query(1, ge=1),
@@ -94,7 +94,7 @@ async def list_work_orders(
     )
 
 
-@router.post("", response_model=WorkOrderResponse, status_code=201)
+@router.post("", response_model=WorkOrderResponse, status_code=201, operation_id="createWorkOrder")
 async def create_new_work_order(
     work_order_in: WorkOrderCreate,
     db: AsyncSession = Depends(get_db),
@@ -107,7 +107,7 @@ async def create_new_work_order(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/{work_order_id}", response_model=WorkOrderResponse)
+@router.get("/{work_order_id}", response_model=WorkOrderResponse, operation_id="getWorkOrder")
 async def get_work_order(
     work_order_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -119,7 +119,7 @@ async def get_work_order(
     return work_order_to_response(work_order)
 
 
-@router.put("/{work_order_id}", response_model=WorkOrderResponse)
+@router.put("/{work_order_id}", response_model=WorkOrderResponse, operation_id="updateWorkOrder")
 async def update_existing_work_order(
     work_order_id: UUID,
     work_order_in: WorkOrderUpdate,
@@ -132,7 +132,7 @@ async def update_existing_work_order(
     return work_order_to_response(work_order)
 
 
-@router.delete("/{work_order_id}", status_code=204)
+@router.delete("/{work_order_id}", status_code=204, operation_id="deleteWorkOrder")
 async def delete_existing_work_order(
     work_order_id: UUID,
     db: AsyncSession = Depends(get_db),

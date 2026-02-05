@@ -14,24 +14,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { aircraftApi, citiesApi } from "@/lib/api";
+import {
+  createAircraft,
+  updateAircraft,
+  listCities,
+} from "@/lib/api";
 import type {
-  Aircraft,
-  AircraftCreateInput,
-  AircraftUpdateInput,
-  City,
-} from "@/types";
+  AircraftResponse,
+  AircraftCreate,
+  AircraftUpdate,
+  CityResponse,
+} from "@/lib/api";
 
 interface AircraftFormProps {
-  aircraft?: Aircraft;
-  onSuccess?: (aircraft: Aircraft) => void;
+  aircraft?: AircraftResponse;
+  onSuccess?: (aircraft: AircraftResponse) => void;
 }
 
 export function AircraftForm({ aircraft, onSuccess }: AircraftFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cities, setCities] = useState<City[]>([]);
+  const [cities, setCities] = useState<CityResponse[]>([]);
 
   const [formData, setFormData] = useState({
     registration_number: aircraft?.registration_number || "",
@@ -49,7 +53,7 @@ export function AircraftForm({ aircraft, onSuccess }: AircraftFormProps) {
   });
 
   useEffect(() => {
-    citiesApi.list().then((data) => setCities(data.items));
+    listCities().then((response) => setCities(response.data.items));
   }, []);
 
   const handleChange = (
@@ -90,17 +94,19 @@ export function AircraftForm({ aircraft, onSuccess }: AircraftFormProps) {
         is_active: formData.is_active,
       };
 
-      let result: Aircraft;
+      let result: AircraftResponse;
       if (aircraft) {
-        result = await aircraftApi.update(aircraft.id, {
+        const response = await updateAircraft(aircraft.id, {
           ...data,
           updated_by: "system",
-        } as AircraftUpdateInput);
+        } as AircraftUpdate);
+        result = response.data;
       } else {
-        result = await aircraftApi.create({
+        const response = await createAircraft({
           ...data,
           created_by: "system",
-        } as AircraftCreateInput);
+        } as AircraftCreate);
+        result = response.data;
       }
 
       if (onSuccess) {

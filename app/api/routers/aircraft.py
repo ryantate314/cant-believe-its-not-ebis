@@ -50,7 +50,7 @@ def aircraft_to_response(aircraft) -> AircraftResponse:
     )
 
 
-@router.get("", response_model=AircraftListResponse)
+@router.get("", response_model=AircraftListResponse, operation_id="listAircraft")
 async def list_aircraft(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -82,7 +82,7 @@ async def list_aircraft(
     )
 
 
-@router.post("", response_model=AircraftResponse, status_code=201)
+@router.post("", response_model=AircraftResponse, status_code=201, operation_id="createAircraft")
 async def create_new_aircraft(
     aircraft_in: AircraftCreate,
     db: AsyncSession = Depends(get_db),
@@ -95,7 +95,7 @@ async def create_new_aircraft(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/{aircraft_id}", response_model=AircraftResponse)
+@router.get("/{aircraft_id}", response_model=AircraftResponse, operation_id="getAircraft")
 async def get_aircraft(
     aircraft_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -107,7 +107,7 @@ async def get_aircraft(
     return aircraft_to_response(aircraft)
 
 
-@router.put("/{aircraft_id}", response_model=AircraftResponse)
+@router.put("/{aircraft_id}", response_model=AircraftResponse, operation_id="updateAircraft")
 async def update_existing_aircraft(
     aircraft_id: UUID,
     aircraft_in: AircraftUpdate,
@@ -123,7 +123,7 @@ async def update_existing_aircraft(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/{aircraft_id}", status_code=204)
+@router.delete("/{aircraft_id}", status_code=204, operation_id="deleteAircraft")
 async def delete_existing_aircraft(
     aircraft_id: UUID,
     db: AsyncSession = Depends(get_db),

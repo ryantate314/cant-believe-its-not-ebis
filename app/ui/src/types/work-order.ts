@@ -1,114 +1,21 @@
-export type WorkOrderStatus =
-  | "created"
-  | "scheduled"
-  | "open"
-  | "in_progress"
-  | "tracking"
-  | "pending"
-  | "in_review"
-  | "completed"
-  | "void";
+// Re-export generated types
+export type {
+  WorkOrderResponse as WorkOrder,
+  WorkOrderCreate as WorkOrderCreateInput,
+  WorkOrderUpdate as WorkOrderUpdateInput,
+  WorkOrderListResponse,
+  WorkOrderStatus,
+  WorkOrderType,
+  PriorityLevel,
+  CityBrief as City,
+  CityListResponse,
+  AircraftBrief,
+} from "@/lib/api";
 
-export type PriorityLevel = "low" | "normal" | "high" | "urgent";
+// Import for display helper types
+import type { WorkOrderStatus, PriorityLevel, WorkOrderType } from "@/lib/api";
 
-export type WorkOrderType = "work_order" | "quote";
-
-export interface City {
-  id: string;
-  code: string;
-  name: string;
-  is_active: boolean;
-}
-
-export interface CityListResponse {
-  items: City[];
-  total: number;
-}
-
-export interface AircraftBrief {
-  id: string;
-  registration_number: string;
-  serial_number: string | null;
-  make: string | null;
-  model: string | null;
-  year_built: number | null;
-}
-
-export interface WorkOrder {
-  id: string;
-  work_order_number: string;
-  sequence_number: number;
-  city: {
-    id: string;
-    code: string;
-    name: string;
-  };
-  aircraft: AircraftBrief;
-  work_order_type: WorkOrderType;
-  status: WorkOrderStatus;
-  status_notes: string | null;
-
-  // Customer
-  customer_name: string | null;
-  customer_po_number: string | null;
-
-  // Dates
-  due_date: string | null;
-  created_date: string;
-  completed_date: string | null;
-
-  // Assignment
-  lead_technician: string | null;
-  sales_person: string | null;
-  priority: PriorityLevel;
-
-  // Audit
-  created_by: string;
-  updated_by: string | null;
-  created_at: string;
-  updated_at: string;
-
-  // Item count
-  item_count: number;
-}
-
-export interface WorkOrderListResponse {
-  items: WorkOrder[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-export interface WorkOrderCreateInput {
-  city_id: string;
-  aircraft_id: string;
-  created_by: string;
-  work_order_type?: WorkOrderType;
-  status?: WorkOrderStatus;
-  status_notes?: string;
-  customer_name?: string;
-  customer_po_number?: string;
-  due_date?: string;
-  lead_technician?: string;
-  sales_person?: string;
-  priority?: PriorityLevel;
-}
-
-export interface WorkOrderUpdateInput {
-  work_order_type?: WorkOrderType;
-  status?: WorkOrderStatus;
-  status_notes?: string;
-  aircraft_id?: string;
-  customer_name?: string;
-  customer_po_number?: string;
-  due_date?: string;
-  lead_technician?: string;
-  sales_person?: string;
-  priority?: PriorityLevel;
-  updated_by?: string;
-}
-
-// Status display helpers
+// Status display helpers (not generated - UI-specific)
 export const WORK_ORDER_STATUS_LABELS: Record<WorkOrderStatus, string> = {
   created: "Created",
   scheduled: "Scheduled",

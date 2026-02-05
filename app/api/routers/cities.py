@@ -9,7 +9,7 @@ from crud.city import get_cities, get_city_by_uuid
 router = APIRouter(prefix="/cities", tags=["cities"])
 
 
-@router.get("", response_model=CityListResponse)
+@router.get("", response_model=CityListResponse, operation_id="listCities")
 async def list_cities(
     active_only: bool = True,
     db: AsyncSession = Depends(get_db),
@@ -30,7 +30,7 @@ async def list_cities(
     )
 
 
-@router.get("/{city_id}", response_model=CityResponse)
+@router.get("/{city_id}", response_model=CityResponse, operation_id="getCity")
 async def get_city(
     city_id: UUID,
     db: AsyncSession = Depends(get_db),

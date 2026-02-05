@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { WorkOrder, WorkOrderStatus } from "@/types";
-import { workOrdersApi } from "@/lib/api";
+import { updateWorkOrder } from "@/lib/api";
+import type { WorkOrderResponse, WorkOrderStatus } from "@/lib/api";
 
 const STATUS_COLORS: Record<WorkOrderStatus, string> = {
   created: "bg-gray-100 text-gray-800",
@@ -37,7 +37,7 @@ const STATUS_LABELS: Record<WorkOrderStatus, string> = {
 };
 
 interface WorkOrderHeaderProps {
-  workOrder: WorkOrder;
+  workOrder: WorkOrderResponse;
   onStatusChange?: (status: WorkOrderStatus) => void;
 }
 
@@ -47,7 +47,7 @@ export function WorkOrderHeader({
 }: WorkOrderHeaderProps) {
   const handleStatusChange = async (newStatus: WorkOrderStatus) => {
     try {
-      await workOrdersApi.update(workOrder.id, {
+      await updateWorkOrder(workOrder.id, {
         status: newStatus,
         updated_by: "system",
       });

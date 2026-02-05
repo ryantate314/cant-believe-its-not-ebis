@@ -32,13 +32,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { laborKitsApi } from "@/lib/api";
-import type { LaborKit, SortState } from "@/types";
+import {
+  listLaborKits,
+  createLaborKit,
+} from "@/lib/api";
+import type { LaborKitResponse, ListLaborKitsParams } from "@/lib/api";
+import type { SortState } from "@/types";
 import { LABOR_KIT_CATEGORIES } from "@/types/labor-kit";
 
 export function LaborKitList() {
   const router = useRouter();
-  const [kits, setKits] = useState<LaborKit[]>([]);
+  const [kits, setKits] = useState<LaborKitResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
@@ -56,12 +60,12 @@ export function LaborKitList() {
   const fetchKits = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await laborKitsApi.list({
-        sort_by: sortState.sortBy || undefined,
+      const response = await listLaborKits({
+        sort_by: sortState.sortBy as ListLaborKitsParams["sort_by"],
         sort_order: sortState.sortOrder,
         active_only: !showInactive,
       });
-      setKits(data.items);
+      setKits(response.data.items);
     } finally {
       setLoading(false);
     }
@@ -92,13 +96,13 @@ export function LaborKitList() {
     e.preventDefault();
 
     try {
-      const newKit = await laborKitsApi.create({
+      const response = await createLaborKit({
         ...formData,
         created_by: "system",
       });
       setDialogOpen(false);
       resetForm();
-      router.push(`/admin/laborkit/${newKit.id}`);
+      router.push(`/admin/laborkit/${response.data.id}`);
     } catch (error) {
       console.error("Failed to save labor kit:", error);
     }

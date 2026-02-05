@@ -41,8 +41,14 @@ import {
 } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { workOrderItemsApi, laborKitsApi } from "@/lib/api";
-import type { WorkOrderItem, WorkOrderItemStatus, SortState, LaborKit } from "@/types";
+import {
+  listWorkOrderItems,
+  createWorkOrderItem,
+  listLaborKits,
+  applyLaborKit,
+} from "@/lib/api";
+import type { WorkOrderItemResponse, WorkOrderItemStatus, LaborKitResponse, ListWorkOrderItemsParams } from "@/lib/api";
+import type { SortState } from "@/types";
 
 const STATUS_COLORS: Record<WorkOrderItemStatus, string> = {
   open: "bg-green-100 text-green-800",
@@ -68,11 +74,11 @@ interface WorkOrderItemListProps {
 
 export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
   const router = useRouter();
-  const [items, setItems] = useState<WorkOrderItem[]>([]);
+  const [items, setItems] = useState<WorkOrderItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [applyKitDialogOpen, setApplyKitDialogOpen] = useState(false);
-  const [laborKits, setLaborKits] = useState<LaborKit[]>([]);
+  const [laborKits, setLaborKits] = useState<LaborKitResponse[]>([]);
   const [selectedKitId, setSelectedKitId] = useState<string>("");
   const [applyingKit, setApplyingKit] = useState(false);
   const [sortState, setSortState] = useState<SortState>({
@@ -94,11 +100,11 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
     console.log("Fetching items with sort:", sortState);
     setLoading(true);
     try {
-      const data = await workOrderItemsApi.list(workOrderId, {
-        sort_by: sortState.sortBy || undefined,
+      const response = await listWorkOrderItems(workOrderId, {
+        sort_by: sortState.sortBy as ListWorkOrderItemsParams["sort_by"],
         sort_order: sortState.sortOrder,
       });
-      setItems(data.items);
+      setItems(response.data.items);
     } finally {
       setLoading(false);
     }
@@ -140,7 +146,7 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
     };
 
     try {
-      await workOrderItemsApi.create(workOrderId, {
+      await createWorkOrderItem(workOrderId, {
         ...data,
         created_by: "system",
       });
@@ -154,8 +160,8 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
 
   const openApplyKitDialog = async () => {
     try {
-      const data = await laborKitsApi.list({ active_only: true });
-      setLaborKits(data.items);
+      const response = await listLaborKits({ active_only: true });
+      setLaborKits(response.data.items);
       setSelectedKitId("");
       setApplyKitDialogOpen(true);
     } catch (error) {
@@ -168,11 +174,11 @@ export function WorkOrderItemList({ workOrderId }: WorkOrderItemListProps) {
 
     setApplyingKit(true);
     try {
-      const result = await laborKitsApi.apply(selectedKitId, workOrderId, "system");
+      const response = await applyLaborKit(selectedKitId, workOrderId, { created_by: "system" });
       setApplyKitDialogOpen(false);
       setSelectedKitId("");
       fetchItems();
-      alert(`Successfully added ${result.items_created} items from the labor kit.`);
+      alert(`Successfully added ${response.data.items_created} items from the labor kit.`);
     } catch (error) {
       console.error("Failed to apply labor kit:", error);
       alert("Failed to apply labor kit. Please try again.");

@@ -1,6 +1,5 @@
 import useSWR, { mutate } from "swr";
-import { workOrderItemsApi } from "@/lib/api";
-import type { WorkOrderItem } from "@/types";
+import { getWorkOrderItem, type WorkOrderItemResponse } from "@/lib/api";
 
 /**
  * Hook for fetching and caching a work order item by ID.
@@ -10,13 +9,16 @@ import type { WorkOrderItem } from "@/types";
  * const { item, isLoading, error, mutate } = useWorkOrderItem(workOrderId, itemId);
  *
  * // After updating the item, invalidate the cache:
- * await workOrderItemsApi.update(workOrderId, itemId, data);
+ * await updateWorkOrderItem(workOrderId, itemId, data);
  * mutateWorkOrderItem(workOrderId, itemId);
  */
 export function useWorkOrderItem(workOrderId: string, itemId: string) {
-  const { data, error, isLoading, mutate: swrMutate } = useSWR<WorkOrderItem>(
+  const { data, error, isLoading, mutate: swrMutate } = useSWR(
     workOrderId && itemId ? `work-order-item:${workOrderId}:${itemId}` : null,
-    () => workOrderItemsApi.get(workOrderId, itemId)
+    async () => {
+      const response = await getWorkOrderItem(workOrderId, itemId);
+      return response.data;
+    }
   );
 
   return {
@@ -34,7 +36,7 @@ export function useWorkOrderItem(workOrderId: string, itemId: string) {
 export function mutateWorkOrderItem(
   workOrderId: string,
   itemId: string,
-  data?: WorkOrderItem
+  data?: WorkOrderItemResponse
 ) {
   return mutate(`work-order-item:${workOrderId}:${itemId}`, data);
 }

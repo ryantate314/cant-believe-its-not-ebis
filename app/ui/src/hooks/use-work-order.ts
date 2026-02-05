@@ -1,6 +1,5 @@
 import useSWR, { mutate } from "swr";
-import { workOrdersApi } from "@/lib/api";
-import type { WorkOrder } from "@/types";
+import { getWorkOrder, type WorkOrderResponse } from "@/lib/api";
 
 /**
  * Hook for fetching and caching a work order by ID.
@@ -10,13 +9,16 @@ import type { WorkOrder } from "@/types";
  * const { workOrder, isLoading, error } = useWorkOrder(id);
  *
  * // After updating the work order, invalidate the cache:
- * await workOrdersApi.update(id, data);
+ * await updateWorkOrder(id, data);
  * mutateWorkOrder(id);
  */
 export function useWorkOrder(id: string) {
-  const { data, error, isLoading } = useSWR<WorkOrder>(
+  const { data, error, isLoading } = useSWR(
     id ? `work-order:${id}` : null,
-    () => workOrdersApi.get(id)
+    async () => {
+      const response = await getWorkOrder(id);
+      return response.data;
+    }
   );
 
   return {
@@ -30,6 +32,6 @@ export function useWorkOrder(id: string) {
  * Invalidate the cached work order, triggering a refetch
  * for all components using useWorkOrder with this ID.
  */
-export function mutateWorkOrder(id: string, data?: WorkOrder) {
+export function mutateWorkOrder(id: string, data?: WorkOrderResponse) {
   return mutate(`work-order:${id}`, data);
 }

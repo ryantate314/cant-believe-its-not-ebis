@@ -30,18 +30,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { laborKitItemsApi } from "@/lib/api";
-import type { LaborKitItem, SortState } from "@/types";
+import {
+  listLaborKitItems,
+  createLaborKitItem,
+  updateLaborKitItem,
+  deleteLaborKitItem,
+} from "@/lib/api";
+import type { LaborKitItemResponse, ListLaborKitItemsParams } from "@/lib/api";
+import type { SortState } from "@/types";
 
 interface LaborKitItemListProps {
   kitId: string;
 }
 
 export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
-  const [items, setItems] = useState<LaborKitItem[]>([]);
+  const [items, setItems] = useState<LaborKitItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<LaborKitItem | null>(null);
+  const [editingItem, setEditingItem] = useState<LaborKitItemResponse | null>(null);
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "item_number",
     sortOrder: "asc",
@@ -64,11 +70,11 @@ export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const itemsData = await laborKitItemsApi.list(kitId, {
-        sort_by: sortState.sortBy || undefined,
+      const response = await listLaborKitItems(kitId, {
+        sort_by: sortState.sortBy as ListLaborKitItemsParams["sort_by"],
         sort_order: sortState.sortOrder,
       });
-      setItems(itemsData.items);
+      setItems(response.data.items);
     } finally {
       setLoading(false);
     }
@@ -104,7 +110,7 @@ export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
     setEditingItem(null);
   };
 
-  const openEditDialog = (item: LaborKitItem) => {
+  const openEditDialog = (item: LaborKitItemResponse) => {
     setEditingItem(item);
     setFormData({
       discrepancy: item.discrepancy || "",
@@ -138,12 +144,12 @@ export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
 
     try {
       if (editingItem) {
-        await laborKitItemsApi.update(kitId, editingItem.id, {
+        await updateLaborKitItem(kitId, editingItem.id, {
           ...data,
           updated_by: "system",
         });
       } else {
-        await laborKitItemsApi.create(kitId, {
+        await createLaborKitItem(kitId, {
           ...data,
           created_by: "system",
         });
@@ -160,7 +166,7 @@ export function LaborKitItemList({ kitId }: LaborKitItemListProps) {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
     try {
-      await laborKitItemsApi.delete(kitId, itemId);
+      await deleteLaborKitItem(kitId, itemId);
       fetchData();
     } catch (error) {
       console.error("Failed to delete item:", error);

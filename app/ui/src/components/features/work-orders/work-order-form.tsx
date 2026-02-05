@@ -31,18 +31,22 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { workOrdersApi, aircraftApi } from "@/lib/api";
+import {
+  createWorkOrder,
+  updateWorkOrder,
+  listAircraft,
+} from "@/lib/api";
 import type {
-  WorkOrder,
-  WorkOrderCreateInput,
-  WorkOrderUpdateInput,
-} from "@/types";
-import type { Aircraft } from "@/types/aircraft";
+  WorkOrderResponse,
+  WorkOrderCreate,
+  WorkOrderUpdate,
+  AircraftResponse,
+} from "@/lib/api";
 
 interface WorkOrderFormProps {
   cityId: string;
-  workOrder?: WorkOrder;
-  onSuccess?: (workOrder: WorkOrder) => void;
+  workOrder?: WorkOrderResponse;
+  onSuccess?: (workOrder: WorkOrderResponse) => void;
 }
 
 export function WorkOrderForm({
@@ -53,7 +57,7 @@ export function WorkOrderForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+  const [aircraftList, setAircraftList] = useState<AircraftResponse[]>([]);
   const [aircraftLoading, setAircraftLoading] = useState(true);
   const [aircraftModalOpen, setAircraftModalOpen] = useState(false);
 
@@ -73,8 +77,8 @@ export function WorkOrderForm({
   useEffect(() => {
     async function fetchAircraft() {
       try {
-        const response = await aircraftApi.list({ active_only: true, page_size: 100 });
-        setAircraftList(response.items);
+        const response = await listAircraft({ active_only: true, page_size: 100 });
+        setAircraftList(response.data.items);
       } catch (err) {
         console.error("Failed to fetch aircraft:", err);
       } finally {
@@ -121,9 +125,9 @@ export function WorkOrderForm({
         due_date: formData.due_date || undefined,
       };
 
-      let result: WorkOrder;
+      let result: WorkOrderResponse;
       if (workOrder) {
-        const updateData: WorkOrderUpdateInput = {
+        const updateData: WorkOrderUpdate = {
           work_order_type: data.work_order_type,
           priority: data.priority,
           customer_name: data.customer_name || undefined,
@@ -138,9 +142,10 @@ export function WorkOrderForm({
         if (data.aircraft_id && data.aircraft_id !== workOrder.aircraft.id) {
           updateData.aircraft_id = data.aircraft_id;
         }
-        result = await workOrdersApi.update(workOrder.id, updateData);
+        const response = await updateWorkOrder(workOrder.id, updateData);
+        result = response.data;
       } else {
-        result = await workOrdersApi.create({
+        const response = await createWorkOrder({
           city_id: cityId,
           aircraft_id: data.aircraft_id,
           created_by: "system",
@@ -152,7 +157,8 @@ export function WorkOrderForm({
           lead_technician: data.lead_technician || undefined,
           sales_person: data.sales_person || undefined,
           status_notes: data.status_notes || undefined,
-        } as WorkOrderCreateInput);
+        } as WorkOrderCreate);
+        result = response.data;
       }
 
       if (onSuccess) {

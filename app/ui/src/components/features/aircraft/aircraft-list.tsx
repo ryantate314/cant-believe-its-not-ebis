@@ -21,12 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { aircraftApi, citiesApi } from "@/lib/api";
+import {
+  listAircraft,
+  listCities,
+} from "@/lib/api";
+import type { AircraftResponse, CityResponse, ListAircraftParams } from "@/lib/api";
 import { useSortParams } from "@/hooks/use-sort-params";
-import type { Aircraft, City } from "@/types";
 
 type FetchState = {
-  data: Aircraft[];
+  data: AircraftResponse[];
   total: number;
   fetchKey: string;
 };
@@ -34,7 +37,7 @@ type FetchState = {
 export function AircraftList() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [cities, setCities] = useState<City[]>([]);
+  const [cities, setCities] = useState<CityResponse[]>([]);
   const [fetchState, setFetchState] = useState<FetchState>({
     data: [],
     total: 0,
@@ -58,25 +61,24 @@ export function AircraftList() {
   const total = fetchState.total;
 
   useEffect(() => {
-    citiesApi.list().then((data) => setCities(data.items));
+    listCities().then((response) => setCities(response.data.items));
   }, []);
 
   useEffect(() => {
     let cancelled = false;
 
-    aircraftApi
-      .list({
+    listAircraft({
         page,
         search: search || undefined,
         city_id: cityId || undefined,
-        sort_by: sortBy || undefined,
+        sort_by: sortBy as ListAircraftParams["sort_by"],
         sort_order: sortOrder,
       })
-      .then((data) => {
+      .then((response) => {
         if (!cancelled) {
           setFetchState({
-            data: data.items,
-            total: data.total,
+            data: response.data.items,
+            total: response.data.total,
             fetchKey: currentFetchKey,
           });
         }
