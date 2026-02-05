@@ -42,6 +42,18 @@ yarn lint       # ESLint
 make terraform-apply    # Deploy to Azure (uses config/dev.tfvars)
 ```
 
+### Testing
+```bash
+make api-test              # Run backend tests
+make api-test-cov          # Run backend tests with coverage report
+make ui-test               # Run frontend unit/integration tests
+make ui-test-cov           # Run frontend tests with coverage
+make ui-test-e2e           # Run Playwright E2E tests
+make test                  # Run all tests (backend + frontend)
+```
+
+For detailed testing methodology, see [docs/testing.md](docs/testing.md).
+
 ## Architecture
 
 ```
@@ -70,11 +82,44 @@ infrastructure/   # Terraform Azure configuration
 
 ## Frontend Development Conventions
 
+- **Mobile-first design:** Build UI mobile-first with responsive breakpoints for tablets and desktops; ensure all features are usable on touch devices
 - **Component Library:** Use [shadcn/ui](https://ui.shadcn.com/) as the foundation for UI components
 - **Adding components:** Always use the CLI (`npx shadcn@latest add <component>`) to add new shadcn/ui components—do not manually create or copy component files
 - **Prefer reuse:** Before creating new UI elements, check for existing components that can be extended or composed
 - **Component structure:** shadcn/ui primitives go in `components/ui/`; build domain-specific components in `components/features/`
 - **Styling:** Use Tailwind CSS classes consistently; extend shadcn/ui component variants rather than duplicating styles
+
+## Testing Conventions
+
+### Coverage Requirements
+
+- Minimum 80% line coverage enforced on both backend and frontend
+- CI builds fail if coverage drops below threshold
+
+### Backend Testing (pytest)
+
+- Test files in `app/api/tests/` with `test_*.py` naming
+- **Unit tests** in `tests/unit/` - test schemas, business logic without database
+- **Integration tests** in `tests/integration/` - test API endpoints with test database
+- Use factories (`tests/factories/`) for test data generation
+- Run tests before committing changes to API code
+
+### Frontend Testing (Vitest + Playwright)
+
+- Test files in `app/ui/__tests__/` with `*.test.ts(x)` naming
+- **Unit tests** for utilities and API client (`__tests__/unit/`)
+- **Integration tests** for components (`__tests__/integration/`)
+- **E2E tests** with Playwright (`__tests__/e2e/*.spec.ts`)
+- Mock API calls using MSW (Mock Service Worker)
+- Skip testing shadcn/ui primitives in `components/ui/` - focus on feature components
+
+### What to Test
+
+- **API endpoints:** request/response contracts, error handling, edge cases
+- **CRUD operations:** database interactions, validation
+- **Feature components:** user interactions, form submissions, data display
+- **API client:** error handling, request formatting
+- **E2E:** critical user workflows (create/edit/delete work orders)
 
 ## Prerequisites
 
