@@ -4,5 +4,7 @@ from models.work_order_item import WorkOrderItem
 from models.labor_kit import LaborKit
 from models.labor_kit_item import LaborKitItem
 from models.aircraft import Aircraft
+from models.customer import Customer
+from models.aircraft_customer import AircraftCustomer
 
-__all__ = ["City", "WorkOrder", "WorkOrderItem", "LaborKit", "LaborKitItem", "Aircraft"]
+__all__ = ["City", "WorkOrder", "WorkOrderItem", "LaborKit", "LaborKitItem", "Aircraft", "Customer", "AircraftCustomer"]

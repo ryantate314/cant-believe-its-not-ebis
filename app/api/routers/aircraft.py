@@ -12,6 +12,7 @@ from schemas.aircraft import (
     AircraftListResponse,
     CityBrief,
 )
+from schemas.customer import AircraftCustomerResponse
 from crud.aircraft import (
     get_aircraft_list,
     get_aircraft_by_uuid,
@@ -19,12 +20,32 @@ from crud.aircraft import (
     update_aircraft,
     delete_aircraft,
 )
+from crud.customer import get_customers_for_aircraft, get_customers_for_aircraft_batch
 
 router = APIRouter(prefix="/aircraft", tags=["aircraft"])
 
 
-def aircraft_to_response(aircraft) -> AircraftResponse:
-    """Convert an Aircraft model to a response schema."""
+def aircraft_to_response(
+    aircraft, customers: list[tuple] | None = None
+) -> AircraftResponse:
+    """Convert an Aircraft model to a response schema.
+
+    Args:
+        aircraft: Aircraft model instance.
+        customers: List of (Customer, is_primary) tuples, or None for empty list.
+    """
+    customer_responses = []
+    if customers:
+        for customer, is_primary in customers:
+            customer_responses.append(
+                AircraftCustomerResponse(
+                    id=customer.uuid,
+                    name=customer.name,
+                    email=customer.email,
+                    is_primary=is_primary,
+                )
+            )
+
     return AircraftResponse(
         id=aircraft.uuid,
         registration_number=aircraft.registration_number,
@@ -38,7 +59,7 @@ def aircraft_to_response(aircraft) -> AircraftResponse:
             code=aircraft.primary_city.code,
             name=aircraft.primary_city.name,
         ) if aircraft.primary_city else None,
-        customer_name=aircraft.customer_name,
+        customers=customer_responses,
         aircraft_class=aircraft.aircraft_class,
         fuel_code=aircraft.fuel_code,
         notes=aircraft.notes,
@@ -58,7 +79,7 @@ async def list_aircraft(
     city_id: UUID | None = Query(None, description="Filter by primary city UUID"),
     active_only: bool = Query(True, description="Only show active aircraft"),
     sort_by: Literal[
-        "registration_number", "make", "model", "year_built", "customer_name", "created_at"
+        "registration_number", "make", "model", "year_built", "created_at"
     ] | None = Query(None, description="Column to sort by"),
     sort_order: SortOrder = Query(SortOrder.DESC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),
@@ -74,8 +95,16 @@ async def list_aircraft(
         sort_by=sort_by,
         sort_order=sort_order,
     )
+
+    # Batch-query customers for all aircraft
+    aircraft_ids = [a.id for a in aircraft_list]
+    customers_by_aircraft = await get_customers_for_aircraft_batch(db, aircraft_ids)
+
     return AircraftListResponse(
-        items=[aircraft_to_response(a) for a in aircraft_list],
+        items=[
+            aircraft_to_response(a, customers_by_aircraft.get(a.id, []))
+            for a in aircraft_list
+        ],
         total=total,
         page=page,
         page_size=page_size,
@@ -90,7 +119,7 @@ async def create_new_aircraft(
     """Create a new aircraft."""
     try:
         aircraft = await create_aircraft(db, aircraft_in)
-        return aircraft_to_response(aircraft)
+        return aircraft_to_response(aircraft, [])
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -104,7 +133,8 @@ async def get_aircraft(
     aircraft = await get_aircraft_by_uuid(db, aircraft_id)
     if not aircraft:
         raise HTTPException(status_code=404, detail="Aircraft not found")
-    return aircraft_to_response(aircraft)
+    customers = await get_customers_for_aircraft(db, aircraft.id)
+    return aircraft_to_response(aircraft, customers)
 
 
 @router.put("/{aircraft_id}", response_model=AircraftResponse)
@@ -118,7 +148,8 @@ async def update_existing_aircraft(
         aircraft = await update_aircraft(db, aircraft_id, aircraft_in)
         if not aircraft:
             raise HTTPException(status_code=404, detail="Aircraft not found")
-        return aircraft_to_response(aircraft)
+        customers = await get_customers_for_aircraft(db, aircraft.id)
+        return aircraft_to_response(aircraft, customers)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

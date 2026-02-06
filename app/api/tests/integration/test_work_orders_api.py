@@ -135,8 +135,6 @@ class TestCreateWorkOrder:
             "work_order_type": "quote",
             "status": "open",
             "status_notes": "Ready for review",
-            "customer_name": "Acme Aviation",
-            "customer_po_number": "PO-999",
             "due_date": "2026-12-31",
             "lead_technician": "John Smith",
             "sales_person": "Jane Doe",
@@ -149,7 +147,7 @@ class TestCreateWorkOrder:
         assert data["work_order_type"] == "quote"
         assert data["status"] == "open"
         assert data["aircraft"]["registration_number"] == test_aircraft.registration_number
-        assert data["customer_name"] == "Acme Aviation"
+        assert data["customer"] is None
         assert data["priority"] == "high"
 
     async def test_create_work_order_invalid_city(
@@ -244,8 +242,7 @@ class TestGetWorkOrder:
             "work_order_type",
             "status",
             "status_notes",
-            "customer_name",
-            "customer_po_number",
+            "customer",
             "due_date",
             "created_date",
             "completed_date",
@@ -296,7 +293,6 @@ class TestUpdateWorkOrder:
         """Test updating multiple work order fields."""
         payload = {
             "status": "open",
-            "customer_name": "Updated Customer",
             "priority": "urgent",
             "updated_by": "updater_user",
         }
@@ -307,7 +303,6 @@ class TestUpdateWorkOrder:
 
         data = response.json()
         assert data["status"] == "open"
-        assert data["customer_name"] == "Updated Customer"
         assert data["priority"] == "urgent"
         assert data["updated_by"] == "updater_user"
 
@@ -324,8 +319,6 @@ class TestUpdateWorkOrder:
         self, client: AsyncClient, test_work_order: WorkOrder
     ):
         """Test that partial updates don't affect unset fields."""
-        original_customer = test_work_order.customer_name
-
         payload = {"status": "open"}
         response = await client.put(
             f"/api/v1/work-orders/{test_work_order.uuid}", json=payload
@@ -334,7 +327,7 @@ class TestUpdateWorkOrder:
 
         data = response.json()
         assert data["status"] == "open"
-        assert data["customer_name"] == original_customer
+        assert data["priority"] == "normal"
 
 
 class TestDeleteWorkOrder:

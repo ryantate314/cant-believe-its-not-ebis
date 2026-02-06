@@ -2,11 +2,13 @@ import { http, HttpResponse } from "msw";
 import {
   mockCities,
   mockAircraft,
+  mockCustomers,
   mockWorkOrders,
   mockWorkOrderItems,
 } from "./data";
 import type { WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
+import type { Customer } from "@/types/customer";
 
 // Track created items for sequence number generation
 let workOrderSequence = mockWorkOrders.length + 1;
@@ -52,7 +54,7 @@ export const handlers = [
       filtered = filtered.filter(
         (wo) =>
           wo.work_order_number.toLowerCase().includes(searchLower) ||
-          wo.customer_name?.toLowerCase().includes(searchLower) ||
+          wo.customer?.name?.toLowerCase().includes(searchLower) ||
           wo.aircraft.registration_number.toLowerCase().includes(searchLower)
       );
     }
@@ -125,8 +127,14 @@ export const handlers = [
       work_order_type: (body.work_order_type as WorkOrder["work_order_type"]) || "work_order",
       status: (body.status as WorkOrder["status"]) || "created",
       status_notes: (body.status_notes as string) || null,
-      customer_name: (body.customer_name as string) || null,
-      customer_po_number: (body.customer_po_number as string) || null,
+      customer: (() => {
+        const primary = aircraft.customers?.find(
+          (c: { is_primary: boolean }) => c.is_primary
+        );
+        return primary
+          ? { id: primary.id, name: primary.name, email: primary.email }
+          : null;
+      })(),
       due_date: (body.due_date as string) || null,
       created_date: now,
       completed_date: null,
@@ -331,5 +339,119 @@ export const handlers = [
       return HttpResponse.json({ detail: "Aircraft not found" }, { status: 404 });
     }
     return HttpResponse.json(aircraft);
+  }),
+
+  // Customers API
+  http.get("/api/customers", ({ request }) => {
+    const url = new URL(request.url);
+    const activeOnly = url.searchParams.get("active_only") !== "false";
+    const search = url.searchParams.get("search");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const pageSize = parseInt(url.searchParams.get("page_size") || "20");
+
+    let filtered = activeOnly
+      ? mockCustomers.filter((c) => c.is_active)
+      : mockCustomers;
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchLower) ||
+          c.email?.toLowerCase().includes(searchLower) ||
+          c.phone?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const start = (page - 1) * pageSize;
+    const paged = filtered.slice(start, start + pageSize);
+
+    return HttpResponse.json({
+      items: paged,
+      total: filtered.length,
+      page,
+      page_size: pageSize,
+    });
+  }),
+
+  http.get("/api/customers/:id", ({ params }) => {
+    const customer = mockCustomers.find((c) => c.id === params.id);
+    if (!customer) {
+      return HttpResponse.json(
+        { detail: "Customer not found" },
+        { status: 404 }
+      );
+    }
+    return HttpResponse.json(customer);
+  }),
+
+  http.post("/api/customers", async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    const now = new Date().toISOString();
+    const newCustomer: Customer = {
+      id: `customer-uuid-${Date.now()}`,
+      name: body.name as string,
+      email: (body.email as string) || null,
+      phone: (body.phone as string) || null,
+      phone_type: (body.phone_type as string) || null,
+      address: (body.address as string) || null,
+      address_2: (body.address_2 as string) || null,
+      city: (body.city as string) || null,
+      state: (body.state as string) || null,
+      zip: (body.zip as string) || null,
+      country: (body.country as string) || null,
+      notes: (body.notes as string) || null,
+      is_active: (body.is_active as boolean) ?? true,
+      created_by: body.created_by as string,
+      updated_by: null,
+      created_at: now,
+      updated_at: now,
+    };
+    return HttpResponse.json(newCustomer, { status: 201 });
+  }),
+
+  http.put("/api/customers/:id", async ({ params, request }) => {
+    const customer = mockCustomers.find((c) => c.id === params.id);
+    if (!customer) {
+      return HttpResponse.json(
+        { detail: "Customer not found" },
+        { status: 404 }
+      );
+    }
+    const body = (await request.json()) as Record<string, unknown>;
+    const updated: Customer = {
+      ...customer,
+      ...body,
+      updated_at: new Date().toISOString(),
+    };
+    return HttpResponse.json(updated);
+  }),
+
+  http.delete("/api/customers/:id", ({ params }) => {
+    const customer = mockCustomers.find((c) => c.id === params.id);
+    if (!customer) {
+      return HttpResponse.json(
+        { detail: "Customer not found" },
+        { status: 404 }
+      );
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Customer-Aircraft Relationship API
+  http.get("/api/customers/:customerId/aircraft", () => {
+    return HttpResponse.json(mockAircraft);
+  }),
+
+  http.post("/api/customers/:customerId/aircraft/:aircraftId", () => {
+    return HttpResponse.json({ is_primary: true }, { status: 201 });
+  }),
+
+  http.delete("/api/customers/:customerId/aircraft/:aircraftId", () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put("/api/customers/:customerId/aircraft/:aircraftId/primary", () => {
+    return HttpResponse.json({ status: "ok" });
   }),
 ];

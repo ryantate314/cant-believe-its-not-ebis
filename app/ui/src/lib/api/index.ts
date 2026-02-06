@@ -6,3 +6,4 @@ export { laborKitsApi } from "./labor-kits";
 export { laborKitItemsApi } from "./labor-kit-items";
 export { aircraftApi } from "./aircraft";
 export { dashboardApi } from "./dashboard";
+export { customersApi } from "./customers";

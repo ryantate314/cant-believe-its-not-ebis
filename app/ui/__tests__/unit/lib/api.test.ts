@@ -95,7 +95,7 @@ describe("workOrdersApi", () => {
 
       expect(result.id).toBe("wo-uuid-1");
       expect(result.work_order_number).toBe("KTYS00001-01-2026");
-      expect(result.customer_name).toBe("Test Customer");
+      expect(result.customer?.name).toBe("Acme Corp");
     });
 
     it("should throw ApiError when work order not found", async () => {
@@ -128,13 +128,12 @@ describe("workOrdersApi", () => {
         created_by: "test_user",
         work_order_type: "quote",
         status: "open",
-        customer_name: "New Customer",
         priority: "high",
       });
 
       expect(result.work_order_type).toBe("quote");
       expect(result.status).toBe("open");
-      expect(result.customer_name).toBe("New Customer");
+      expect(result.customer?.name).toBe("Beta Aviation LLC");
       expect(result.priority).toBe("high");
       expect(result.aircraft.registration_number).toBe("N67890");
     });
@@ -172,13 +171,11 @@ describe("workOrdersApi", () => {
     it("should update multiple fields", async () => {
       const result = await workOrdersApi.update("wo-uuid-1", {
         status: "open",
-        customer_name: "Updated Customer",
         priority: "urgent",
         updated_by: "admin",
       });
 
       expect(result.status).toBe("open");
-      expect(result.customer_name).toBe("Updated Customer");
       expect(result.priority).toBe("urgent");
     });
 

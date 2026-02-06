@@ -22,7 +22,6 @@ class AircraftFactory(factory.Factory):
     year_built = 2020
     meter_profile = None
     primary_city_id = None
-    customer_name = factory.Sequence(lambda n: f"Customer {n}")
     aircraft_class = None
     fuel_code = None
     notes = None

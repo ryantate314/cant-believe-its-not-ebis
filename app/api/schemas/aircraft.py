@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
 
+from schemas.customer import AircraftCustomerResponse
+
 
 class AircraftBase(BaseModel):
     """Base schema for aircraft fields."""
@@ -12,7 +14,6 @@ class AircraftBase(BaseModel):
     model: str | None = None
     year_built: int | None = None
     meter_profile: str | None = None
-    customer_name: str | None = None
     aircraft_class: str | None = None
     fuel_code: str | None = None
     notes: str | None = None
@@ -36,7 +37,6 @@ class AircraftUpdate(BaseModel):
     year_built: int | None = None
     meter_profile: str | None = None
     primary_city_id: UUID | None = None
-    customer_name: str | None = None
     aircraft_class: str | None = None
     fuel_code: str | None = None
     notes: str | None = None
@@ -66,7 +66,7 @@ class AircraftResponse(BaseModel):
     year_built: int | None
     meter_profile: str | None
     primary_city: CityBrief | None
-    customer_name: str | None
+    customers: list[AircraftCustomerResponse] = []
     aircraft_class: str | None
     fuel_code: str | None
     notes: str | None

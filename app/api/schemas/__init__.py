@@ -34,6 +34,14 @@ from schemas.aircraft import (
     AircraftResponse,
     AircraftListResponse,
 )
+from schemas.customer import (
+    CustomerCreate,
+    CustomerUpdate,
+    CustomerResponse,
+    CustomerListResponse,
+    CustomerBrief,
+    AircraftCustomerResponse,
+)
 
 __all__ = [
     "CityResponse",
@@ -63,4 +71,10 @@ __all__ = [
     "AircraftUpdate",
     "AircraftResponse",
     "AircraftListResponse",
+    "CustomerCreate",
+    "CustomerUpdate",
+    "CustomerResponse",
+    "CustomerListResponse",
+    "CustomerBrief",
+    "AircraftCustomerResponse",
 ]

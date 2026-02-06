@@ -65,7 +65,7 @@ class TestWorkOrderSchemas:
         assert wo.work_order_type == WorkOrderType.WORK_ORDER
         assert wo.status == WorkOrderStatus.CREATED
         assert wo.priority == PriorityLevel.NORMAL
-        assert wo.customer_name is None
+        assert wo.due_date is None
 
     def test_work_order_create_required_fields(self):
         """Test WorkOrderCreate with required fields."""
@@ -87,8 +87,6 @@ class TestWorkOrderSchemas:
             created_by="test_user",
             work_order_type=WorkOrderType.QUOTE,
             status=WorkOrderStatus.OPEN,
-            customer_name="Test Customer",
-            customer_po_number="PO-001",
             due_date=date(2026, 12, 31),
             lead_technician="John Doe",
             sales_person="Jane Doe",
@@ -135,8 +133,7 @@ class TestWorkOrderSchemas:
             work_order_type=WorkOrderType.WORK_ORDER,
             status=WorkOrderStatus.CREATED,
             status_notes=None,
-            customer_name="Test Customer",
-            customer_po_number="PO-001",
+            customer=None,
             due_date=date(2026, 12, 31),
             created_date=now,
             completed_date=None,

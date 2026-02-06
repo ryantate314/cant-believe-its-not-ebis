@@ -9,6 +9,7 @@ from routers import (
     labor_kits_router,
     labor_kit_items_router,
     aircraft_router,
+    customers_router,
     dashboard_router,
 )
 
@@ -36,6 +37,7 @@ app.include_router(work_order_items_router, prefix=settings.api_v1_prefix)
 app.include_router(labor_kits_router, prefix=settings.api_v1_prefix)
 app.include_router(labor_kit_items_router, prefix=settings.api_v1_prefix)
 app.include_router(aircraft_router, prefix=settings.api_v1_prefix)
+app.include_router(customers_router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard_router, prefix=settings.api_v1_prefix)
 
 

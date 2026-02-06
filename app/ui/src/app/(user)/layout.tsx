@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, ClipboardList, Plane } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Plane, Users } from "lucide-react";
 import { AppSidebar, type NavItem } from "@/components/features/app-sidebar";
 
 const userNavItems: NavItem[] = [
@@ -18,6 +18,11 @@ const userNavItems: NavItem[] = [
     label: "Aircraft",
     href: "/aircraft",
     icon: Plane,
+  },
+  {
+    label: "Customers",
+    href: "/customers",
+    icon: Users,
   },
 ];
 

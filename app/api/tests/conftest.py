@@ -18,6 +18,8 @@ from models.work_order import WorkOrder, WorkOrderStatus, PriorityLevel, WorkOrd
 from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
 from models.labor_kit import LaborKit
 from models.labor_kit_item import LaborKitItem
+from models.customer import Customer
+from models.aircraft_customer import AircraftCustomer
 
 
 # Use in-memory SQLite for tests
@@ -140,8 +142,6 @@ async def test_work_order(
         aircraft_id=test_aircraft.id,
         work_order_type=WorkOrderType.WORK_ORDER,
         status=WorkOrderStatus.CREATED,
-        customer_name="Test Customer",
-        customer_po_number="PO-001",
         priority=PriorityLevel.NORMAL,
         created_by="test_user",
     )
@@ -287,3 +287,60 @@ async def test_labor_kit_with_items(
     await test_session.commit()
     await test_session.refresh(test_labor_kit)
     return test_labor_kit
+
+
+@pytest.fixture
+async def test_customer(test_session: AsyncSession) -> Customer:
+    """Create a test customer."""
+    customer = Customer(
+        uuid=uuid4(),
+        name="Test Customer",
+        email="test@example.com",
+        phone="555-0100",
+        phone_type="office",
+        address="123 Main St",
+        city="Knoxville",
+        state="TN",
+        zip="37901",
+        country="US",
+        is_active=True,
+        created_by="test_user",
+    )
+    test_session.add(customer)
+    await test_session.commit()
+    await test_session.refresh(customer)
+    return customer
+
+
+@pytest.fixture
+async def test_customer_inactive(test_session: AsyncSession) -> Customer:
+    """Create an inactive test customer."""
+    customer = Customer(
+        uuid=uuid4(),
+        name="Inactive Customer",
+        email="inactive@example.com",
+        phone="555-0200",
+        is_active=False,
+        created_by="test_user",
+    )
+    test_session.add(customer)
+    await test_session.commit()
+    await test_session.refresh(customer)
+    return customer
+
+
+@pytest.fixture
+async def test_aircraft_customer_link(
+    test_session: AsyncSession, test_aircraft: Aircraft, test_customer: Customer
+) -> AircraftCustomer:
+    """Link test customer to test aircraft as primary."""
+    link = AircraftCustomer(
+        aircraft_id=test_aircraft.id,
+        customer_id=test_customer.id,
+        is_primary=True,
+        created_by="test_user",
+    )
+    test_session.add(link)
+    await test_session.commit()
+    await test_session.refresh(link)
+    return link

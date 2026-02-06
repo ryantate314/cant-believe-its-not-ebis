@@ -15,7 +15,6 @@ AIRCRAFT_SORT_COLUMNS = {
     "make": Aircraft.make,
     "model": Aircraft.model,
     "year_built": Aircraft.year_built,
-    "customer_name": Aircraft.customer_name,
     "created_at": Aircraft.created_at,
 }
 
@@ -55,7 +54,6 @@ async def get_aircraft_list(
             | Aircraft.serial_number.ilike(search_filter)
             | Aircraft.make.ilike(search_filter)
             | Aircraft.model.ilike(search_filter)
-            | Aircraft.customer_name.ilike(search_filter)
         )
 
     if filters:
@@ -117,7 +115,6 @@ async def create_aircraft(db: AsyncSession, aircraft_in: AircraftCreate) -> Airc
         year_built=aircraft_in.year_built,
         meter_profile=aircraft_in.meter_profile,
         primary_city_id=city_id,
-        customer_name=aircraft_in.customer_name,
         aircraft_class=aircraft_in.aircraft_class,
         fuel_code=aircraft_in.fuel_code,
         notes=aircraft_in.notes,
