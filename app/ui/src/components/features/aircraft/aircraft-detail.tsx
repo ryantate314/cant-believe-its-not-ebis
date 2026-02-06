@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { aircraftApi } from "@/lib/api";
 import type { Aircraft } from "@/types";
+import { AircraftCustomerSection } from "./aircraft-customer-section";
 
 interface AircraftDetailProps {
   aircraftId: string;
@@ -159,21 +160,13 @@ export function AircraftDetail({ aircraftId }: AircraftDetailProps) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Customer Name
-              </dt>
-              <dd className="mt-1">{aircraft.customer_name || "-"}</dd>
-            </div>
-          </dl>
-        </CardContent>
-      </Card>
+      <AircraftCustomerSection
+        aircraftId={aircraftId}
+        customers={aircraft.customers}
+        onUpdate={() => {
+          aircraftApi.get(aircraftId).then(setAircraft);
+        }}
+      />
 
       {aircraft.notes && (
         <Card>

@@ -225,7 +225,9 @@ export function AircraftList() {
                     <TableCell>{a.model || "-"}</TableCell>
                     <TableCell>{a.year_built || "-"}</TableCell>
                     <TableCell>{a.serial_number || "-"}</TableCell>
-                    <TableCell>{a.customer_name || "-"}</TableCell>
+                    <TableCell>
+                      {a.customers?.find((c) => c.is_primary)?.name || "-"}
+                    </TableCell>
                     <TableCell>
                       {a.primary_city ? a.primary_city.code : "-"}
                     </TableCell>

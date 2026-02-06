@@ -41,7 +41,6 @@ export function AircraftForm({ aircraft, onSuccess }: AircraftFormProps) {
     year_built: aircraft?.year_built?.toString() || "",
     meter_profile: aircraft?.meter_profile || "",
     primary_city_id: aircraft?.primary_city?.id || "",
-    customer_name: aircraft?.customer_name || "",
     aircraft_class: aircraft?.aircraft_class || "",
     fuel_code: aircraft?.fuel_code || "",
     notes: aircraft?.notes || "",
@@ -83,7 +82,6 @@ export function AircraftForm({ aircraft, onSuccess }: AircraftFormProps) {
           : undefined,
         meter_profile: formData.meter_profile || undefined,
         primary_city_id: formData.primary_city_id || undefined,
-        customer_name: formData.customer_name || undefined,
         aircraft_class: formData.aircraft_class || undefined,
         fuel_code: formData.fuel_code || undefined,
         notes: formData.notes || undefined,
@@ -232,23 +230,6 @@ export function AircraftForm({ aircraft, onSuccess }: AircraftFormProps) {
               value={formData.meter_profile}
               onChange={handleChange}
               rows={2}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="customer_name">Customer Name</Label>
-            <Input
-              id="customer_name"
-              name="customer_name"
-              value={formData.customer_name}
-              onChange={handleChange}
             />
           </div>
         </CardContent>

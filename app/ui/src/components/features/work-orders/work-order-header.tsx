@@ -75,8 +75,8 @@ export function WorkOrderHeader({
             </Badge>
           </div>
           <div className="mt-2 flex items-center gap-6 text-sm text-muted-foreground">
-            {workOrder.customer_name && (
-              <span>Customer: {workOrder.customer_name}</span>
+            {workOrder.customer && (
+              <span>Customer: {workOrder.customer.name}</span>
             )}
             <span>Aircraft: {workOrder.aircraft.registration_number}</span>
             <span>Items: {workOrder.item_count}</span>

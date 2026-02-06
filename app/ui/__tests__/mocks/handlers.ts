@@ -54,7 +54,7 @@ export const handlers = [
       filtered = filtered.filter(
         (wo) =>
           wo.work_order_number.toLowerCase().includes(searchLower) ||
-          wo.customer_name?.toLowerCase().includes(searchLower) ||
+          wo.customer?.name?.toLowerCase().includes(searchLower) ||
           wo.aircraft.registration_number.toLowerCase().includes(searchLower)
       );
     }
@@ -127,8 +127,14 @@ export const handlers = [
       work_order_type: (body.work_order_type as WorkOrder["work_order_type"]) || "work_order",
       status: (body.status as WorkOrder["status"]) || "created",
       status_notes: (body.status_notes as string) || null,
-      customer_name: (body.customer_name as string) || null,
-      customer_po_number: (body.customer_po_number as string) || null,
+      customer: (() => {
+        const primary = aircraft.customers?.find(
+          (c: { is_primary: boolean }) => c.is_primary
+        );
+        return primary
+          ? { id: primary.id, name: primary.name, email: primary.email }
+          : null;
+      })(),
       due_date: (body.due_date as string) || null,
       created_date: now,
       completed_date: null,
@@ -430,5 +436,22 @@ export const handlers = [
       );
     }
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Customer-Aircraft Relationship API
+  http.get("/api/customers/:customerId/aircraft", () => {
+    return HttpResponse.json(mockAircraft);
+  }),
+
+  http.post("/api/customers/:customerId/aircraft/:aircraftId", () => {
+    return HttpResponse.json({ is_primary: true }, { status: 201 });
+  }),
+
+  http.delete("/api/customers/:customerId/aircraft/:aircraftId", () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put("/api/customers/:customerId/aircraft/:aircraftId/primary", () => {
+    return HttpResponse.json({ status: "ok" });
   }),
 ];

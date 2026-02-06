@@ -1,3 +1,10 @@
+export interface AircraftCustomer {
+  id: string;
+  name: string;
+  email: string | null;
+  is_primary: boolean;
+}
+
 export interface Aircraft {
   id: string;
   registration_number: string;
@@ -11,7 +18,7 @@ export interface Aircraft {
     code: string;
     name: string;
   } | null;
-  customer_name: string | null;
+  customers: AircraftCustomer[];
   aircraft_class: string | null;
   fuel_code: string | null;
   notes: string | null;
@@ -40,7 +47,6 @@ export interface AircraftCreateInput {
   year_built?: number;
   meter_profile?: string;
   primary_city_id?: string;
-  customer_name?: string;
   aircraft_class?: string;
   fuel_code?: string;
   notes?: string;
@@ -55,7 +61,6 @@ export interface AircraftUpdateInput {
   year_built?: number;
   meter_profile?: string;
   primary_city_id?: string;
-  customer_name?: string;
   aircraft_class?: string;
   fuel_code?: string;
   notes?: string;

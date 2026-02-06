@@ -67,7 +67,7 @@ describe("WorkOrderList", () => {
         expect(screen.getByText("KTYS00001-01-2026")).toBeInTheDocument();
       });
 
-      expect(screen.getByText("Test Customer")).toBeInTheDocument();
+      expect(screen.getByText("Acme Corp")).toBeInTheDocument();
     });
 
     it("should show New Work Order button", async () => {

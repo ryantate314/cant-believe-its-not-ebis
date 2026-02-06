@@ -62,13 +62,21 @@ describe("WorkOrderForm", () => {
         expect(screen.getByText("Aircraft *")).toBeInTheDocument();
       });
 
-      // Check for labels
-      expect(screen.getByLabelText("Customer Name")).toBeInTheDocument();
-      expect(screen.getByLabelText("PO Number")).toBeInTheDocument();
+      // Check for labels (customer fields are now readonly, not inputs)
       expect(screen.getByLabelText("Lead Technician")).toBeInTheDocument();
       expect(screen.getByLabelText("Sales Person")).toBeInTheDocument();
       expect(screen.getByLabelText("Due Date")).toBeInTheDocument();
       expect(screen.getByLabelText("Status Notes")).toBeInTheDocument();
+    });
+
+    it("should show message to select aircraft for customer info", async () => {
+      render(<WorkOrderForm cityId="city-uuid-1" />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Select an aircraft to see customer information")
+        ).toBeInTheDocument();
+      });
     });
 
     it("should open aircraft selection modal when clicking Select button", async () => {
@@ -135,7 +143,7 @@ describe("WorkOrderForm", () => {
   });
 
   describe("edit mode", () => {
-    it("should populate form with existing work order data", async () => {
+    it("should display customer info as readonly from work order", async () => {
       render(<WorkOrderForm cityId="city-uuid-1" workOrder={mockWorkOrder} />);
 
       // Wait for aircraft to load
@@ -143,10 +151,8 @@ describe("WorkOrderForm", () => {
         expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
       });
 
-      expect(screen.getByLabelText("Customer Name")).toHaveValue(
-        "Test Customer"
-      );
-      expect(screen.getByLabelText("PO Number")).toHaveValue("PO-001");
+      // Customer should be displayed as readonly text, not an input
+      expect(screen.getByText("Acme Corp")).toBeInTheDocument();
     });
 
     it("should have Update Work Order button", () => {
@@ -173,10 +179,10 @@ describe("WorkOrderForm", () => {
         expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
       });
 
-      // Modify a field
-      const customerInput = screen.getByLabelText("Customer Name");
-      await user.clear(customerInput);
-      await user.type(customerInput, "Updated Customer");
+      // Modify a field (use lead_technician since customer is now readonly)
+      const techInput = screen.getByLabelText("Lead Technician");
+      await user.clear(techInput);
+      await user.type(techInput, "Updated Technician");
 
       await user.click(
         screen.getByRole("button", { name: "Update Work Order" })
@@ -189,21 +195,6 @@ describe("WorkOrderForm", () => {
   });
 
   describe("form validation and input handling", () => {
-    it("should update form state when typing", async () => {
-      const user = userEvent.setup();
-      render(<WorkOrderForm cityId="city-uuid-1" />);
-
-      // Wait for aircraft to load
-      await waitFor(() => {
-        expect(screen.queryByText("Loading aircraft...")).not.toBeInTheDocument();
-      });
-
-      const customerInput = screen.getByLabelText("Customer Name");
-      await user.type(customerInput, "Test Customer");
-
-      expect(customerInput).toHaveValue("Test Customer");
-    });
-
     it("should handle textarea input", async () => {
       const user = userEvent.setup();
       render(<WorkOrderForm cityId="city-uuid-1" />);

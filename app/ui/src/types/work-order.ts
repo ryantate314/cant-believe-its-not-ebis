@@ -34,6 +34,12 @@ export interface AircraftBrief {
   year_built: number | null;
 }
 
+export interface CustomerBrief {
+  id: string;
+  name: string;
+  email: string | null;
+}
+
 export interface WorkOrder {
   id: string;
   work_order_number: string;
@@ -49,8 +55,7 @@ export interface WorkOrder {
   status_notes: string | null;
 
   // Customer
-  customer_name: string | null;
-  customer_po_number: string | null;
+  customer: CustomerBrief | null;
 
   // Dates
   due_date: string | null;
@@ -86,8 +91,6 @@ export interface WorkOrderCreateInput {
   work_order_type?: WorkOrderType;
   status?: WorkOrderStatus;
   status_notes?: string;
-  customer_name?: string;
-  customer_po_number?: string;
   due_date?: string;
   lead_technician?: string;
   sales_person?: string;
@@ -99,8 +102,6 @@ export interface WorkOrderUpdateInput {
   status?: WorkOrderStatus;
   status_notes?: string;
   aircraft_id?: string;
-  customer_name?: string;
-  customer_po_number?: string;
   due_date?: string;
   lead_technician?: string;
   sales_person?: string;

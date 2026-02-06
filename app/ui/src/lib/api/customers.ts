@@ -47,4 +47,28 @@ export const customersApi = {
     fetchApi(`/customers/${id}`, {
       method: "DELETE",
     }),
+
+  linkAircraft: (
+    customerId: string,
+    aircraftId: string
+  ): Promise<{ is_primary: boolean }> =>
+    fetchApi(
+      `/customers/${customerId}/aircraft/${aircraftId}?created_by=system`,
+      {
+        method: "POST",
+      }
+    ),
+
+  unlinkAircraft: (customerId: string, aircraftId: string): Promise<void> =>
+    fetchApi(`/customers/${customerId}/aircraft/${aircraftId}`, {
+      method: "DELETE",
+    }),
+
+  setPrimaryAircraft: (
+    customerId: string,
+    aircraftId: string
+  ): Promise<{ status: string }> =>
+    fetchApi(`/customers/${customerId}/aircraft/${aircraftId}/primary`, {
+      method: "PUT",
+    }),
 };

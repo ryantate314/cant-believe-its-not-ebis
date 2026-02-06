@@ -61,8 +61,6 @@ export function WorkOrderForm({
     work_order_type: workOrder?.work_order_type || "work_order",
     priority: workOrder?.priority || "normal",
     aircraft_id: workOrder?.aircraft?.id || "",
-    customer_name: workOrder?.customer_name || "",
-    customer_po_number: workOrder?.customer_po_number || "",
     due_date: workOrder?.due_date || "",
     lead_technician: workOrder?.lead_technician || "",
     sales_person: workOrder?.sales_person || "",
@@ -126,8 +124,6 @@ export function WorkOrderForm({
         const updateData: WorkOrderUpdateInput = {
           work_order_type: data.work_order_type,
           priority: data.priority,
-          customer_name: data.customer_name || undefined,
-          customer_po_number: data.customer_po_number || undefined,
           due_date: data.due_date,
           lead_technician: data.lead_technician || undefined,
           sales_person: data.sales_person || undefined,
@@ -146,8 +142,6 @@ export function WorkOrderForm({
           created_by: "system",
           work_order_type: data.work_order_type,
           priority: data.priority,
-          customer_name: data.customer_name || undefined,
-          customer_po_number: data.customer_po_number || undefined,
           due_date: data.due_date,
           lead_technician: data.lead_technician || undefined,
           sales_person: data.sales_person || undefined,
@@ -330,7 +324,9 @@ export function WorkOrderForm({
                       <span className="text-sm text-muted-foreground">
                         {aircraft.make} {aircraft.model}
                         {aircraft.year_built ? ` (${aircraft.year_built})` : ""}
-                        {aircraft.customer_name ? ` - ${aircraft.customer_name}` : ""}
+                        {aircraft.customers?.find((c) => c.is_primary)
+                          ? ` - ${aircraft.customers.find((c) => c.is_primary)?.name}`
+                          : ""}
                       </span>
                     </div>
                   </CommandItem>
@@ -345,26 +341,34 @@ export function WorkOrderForm({
         <CardHeader>
           <CardTitle>Customer Information</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="customer_name">Customer Name</Label>
-            <Input
-              id="customer_name"
-              name="customer_name"
-              value={formData.customer_name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="customer_po_number">PO Number</Label>
-            <Input
-              id="customer_po_number"
-              name="customer_po_number"
-              value={formData.customer_po_number}
-              onChange={handleChange}
-            />
-          </div>
+        <CardContent>
+          {workOrder?.customer ? (
+            <div className="rounded-md bg-muted p-4 text-sm">
+              <span className="font-medium">{workOrder.customer.name}</span>
+              {workOrder.customer.email && (
+                <p className="text-muted-foreground mt-1">
+                  {workOrder.customer.email}
+                </p>
+              )}
+            </div>
+          ) : selectedAircraft?.customers?.find((c) => c.is_primary) ? (
+            <div className="rounded-md bg-muted p-4 text-sm">
+              <span className="font-medium">
+                {selectedAircraft.customers.find((c) => c.is_primary)?.name}
+              </span>
+              <p className="text-muted-foreground mt-1">
+                Auto-populated from aircraft&apos;s primary customer
+              </p>
+            </div>
+          ) : selectedAircraft ? (
+            <p className="text-sm text-muted-foreground">
+              No primary customer linked to this aircraft
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Select an aircraft to see customer information
+            </p>
+          )}
         </CardContent>
       </Card>
 
