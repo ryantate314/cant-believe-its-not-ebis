@@ -18,6 +18,8 @@ from models.work_order import WorkOrder, WorkOrderStatus, PriorityLevel, WorkOrd
 from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
 from models.labor_kit import LaborKit
 from models.labor_kit_item import LaborKitItem
+from models.tool_room import ToolRoom
+from models.tool import Tool, ToolType
 
 
 # Use in-memory SQLite for tests
@@ -287,3 +289,37 @@ async def test_labor_kit_with_items(
     await test_session.commit()
     await test_session.refresh(test_labor_kit)
     return test_labor_kit
+
+
+@pytest.fixture
+async def test_tool_room(test_session: AsyncSession, test_city: City) -> ToolRoom:
+    """Create a test tool room."""
+    tool_room = ToolRoom(
+        uuid=uuid4(),
+        city_id=test_city.id,
+        code="TR-001",
+        name="Main Tool Room",
+        is_active=True,
+    )
+    test_session.add(tool_room)
+    await test_session.commit()
+    await test_session.refresh(tool_room)
+    return tool_room
+
+
+@pytest.fixture
+async def test_tool_room_inactive(
+    test_session: AsyncSession, test_city: City
+) -> ToolRoom:
+    """Create an inactive test tool room."""
+    tool_room = ToolRoom(
+        uuid=uuid4(),
+        city_id=test_city.id,
+        code="TR-002",
+        name="Inactive Tool Room",
+        is_active=False,
+    )
+    test_session.add(tool_room)
+    await test_session.commit()
+    await test_session.refresh(tool_room)
+    return tool_room

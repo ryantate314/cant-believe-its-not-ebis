@@ -1,6 +1,7 @@
 import type { City, WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
 import type { Aircraft } from "@/types/aircraft";
+import type { Tool, ToolRoom } from "@/types/tool";
 
 export const mockCities: City[] = [
   {
@@ -151,5 +152,59 @@ export const mockWorkOrderItems: WorkOrderItem[] = [
     ata_code: "23-10",
     hours_estimate: 2.0,
     department: "Avionics",
+  },
+];
+
+export const mockToolRooms: ToolRoom[] = [
+  {
+    id: "tr-uuid-1",
+    code: "TR-001",
+    name: "Main Tool Room",
+    is_active: true,
+  },
+  {
+    id: "tr-uuid-2",
+    code: "TR-002",
+    name: "Secondary Tool Room",
+    is_active: true,
+  },
+];
+
+export const mockTools: Tool[] = [
+  {
+    id: "tool-uuid-1",
+    name: "Torque Wrench 50ft-lb",
+    tool_type: "certified",
+    tool_type_code: "Cert",
+    description: "Calibrated torque wrench",
+    tool_room: { id: "tr-uuid-1", code: "TR-001", name: "Main Tool Room" },
+    city: { id: "city-uuid-1", code: "KTYS", name: "Knoxville McGhee Tyson" },
+    make: "Snap-On",
+    model: "TW-50",
+    serial_number: "SN-001",
+    calibration_due_days: 45,
+    next_calibration_due: "2026-03-22",
+    media_count: 0,
+    is_in_kit: false,
+    created_at: "2026-01-15T10:00:00Z",
+    updated_at: "2026-01-15T10:00:00Z",
+  },
+  {
+    id: "tool-uuid-2",
+    name: "Digital Multimeter",
+    tool_type: "reference",
+    tool_type_code: "Ref",
+    description: "Standard reference meter",
+    tool_room: { id: "tr-uuid-1", code: "TR-001", name: "Main Tool Room" },
+    city: { id: "city-uuid-1", code: "KTYS", name: "Knoxville McGhee Tyson" },
+    make: "Fluke",
+    model: "87V",
+    serial_number: "SN-002",
+    calibration_due_days: null,
+    next_calibration_due: null,
+    media_count: 1,
+    is_in_kit: false,
+    created_at: "2026-01-15T10:00:00Z",
+    updated_at: "2026-01-15T10:00:00Z",
   },
 ];

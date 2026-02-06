@@ -31,6 +31,12 @@ import type {
 } from "@/types/aircraft";
 import type { WorkOrderCountsByCityResponse } from "@/types/dashboard";
 import type { SortOrder } from "@/types/sorting";
+import type {
+  ToolListResponse,
+  ToolRoomListResponse,
+  KitFilter,
+  CalibDueDays,
+} from "@/types/tool";
 
 const API_BASE = "/api";
 
@@ -294,6 +300,47 @@ export const aircraftApi = {
 export const dashboardApi = {
   getWorkOrderCountsByCity: (): Promise<WorkOrderCountsByCityResponse> =>
     fetchApi("/dashboard/work-order-counts-by-city"),
+};
+
+// Tools API
+export const toolsApi = {
+  list: (params: {
+    city_id: string;
+    tool_room_id?: string;
+    page?: number;
+    page_size?: number;
+    kit_filter?: KitFilter;
+    calib_due_days?: CalibDueDays;
+    sort_by?: string;
+    sort_order?: SortOrder;
+  }): Promise<ToolListResponse> => {
+    const searchParams = new URLSearchParams({
+      city_id: params.city_id,
+    });
+    if (params.tool_room_id) searchParams.set("tool_room_id", params.tool_room_id);
+    if (params.page) searchParams.set("page", String(params.page));
+    if (params.page_size) searchParams.set("page_size", String(params.page_size));
+    if (params.kit_filter) searchParams.set("kit_filter", params.kit_filter);
+    if (params.calib_due_days) searchParams.set("calib_due_days", String(params.calib_due_days));
+    if (params.sort_by) searchParams.set("sort_by", params.sort_by);
+    if (params.sort_order) searchParams.set("sort_order", params.sort_order);
+    return fetchApi(`/tools?${searchParams}`);
+  },
+};
+
+// Tool Rooms API
+export const toolRoomsApi = {
+  list: (params: {
+    city_id: string;
+    active_only?: boolean;
+  }): Promise<ToolRoomListResponse> => {
+    const searchParams = new URLSearchParams({
+      city_id: params.city_id,
+    });
+    if (params.active_only !== undefined)
+      searchParams.set("active_only", String(params.active_only));
+    return fetchApi(`/tool-rooms?${searchParams}`);
+  },
 };
 
 export { ApiError };

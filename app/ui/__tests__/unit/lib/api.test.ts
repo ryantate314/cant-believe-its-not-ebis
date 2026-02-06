@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { citiesApi, workOrdersApi, workOrderItemsApi, ApiError } from "@/lib/api";
+import { citiesApi, workOrdersApi, workOrderItemsApi, toolsApi, toolRoomsApi, ApiError } from "@/lib/api";
 import { server } from "../../mocks/server";
 import { http, HttpResponse } from "msw";
 
@@ -299,6 +299,70 @@ describe("workOrderItemsApi", () => {
       await expect(
         workOrderItemsApi.delete("wo-uuid-1", "nonexistent-id")
       ).rejects.toThrow(ApiError);
+    });
+  });
+});
+
+describe("toolsApi", () => {
+  describe("list", () => {
+    it("should fetch tools for a city", async () => {
+      const result = await toolsApi.list({ city_id: "city-uuid-1" });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.page_size).toBe(25);
+    });
+
+    it("should return empty list for non-existent city", async () => {
+      const result = await toolsApi.list({ city_id: "nonexistent-id" });
+
+      expect(result.items).toHaveLength(0);
+      expect(result.total).toBe(0);
+    });
+
+    it("should support pagination", async () => {
+      const result = await toolsApi.list({
+        city_id: "city-uuid-1",
+        page: 1,
+        page_size: 1,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.page).toBe(1);
+      expect(result.page_size).toBe(1);
+    });
+
+    it("should filter by tool room", async () => {
+      const result = await toolsApi.list({
+        city_id: "city-uuid-1",
+        tool_room_id: "tr-uuid-1",
+      });
+
+      expect(result.items).toHaveLength(2);
+      result.items.forEach((tool) => {
+        expect(tool.tool_room.id).toBe("tr-uuid-1");
+      });
+    });
+  });
+});
+
+describe("toolRoomsApi", () => {
+  describe("list", () => {
+    it("should fetch tool rooms for a city", async () => {
+      const result = await toolRoomsApi.list({ city_id: "city-uuid-1" });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
+    });
+
+    it("should fetch all tool rooms including inactive", async () => {
+      const result = await toolRoomsApi.list({
+        city_id: "city-uuid-1",
+        active_only: false,
+      });
+
+      expect(result.items).toHaveLength(2);
     });
   });
 });

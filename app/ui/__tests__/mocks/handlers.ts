@@ -4,6 +4,8 @@ import {
   mockAircraft,
   mockWorkOrders,
   mockWorkOrderItems,
+  mockTools,
+  mockToolRooms,
 } from "./data";
 import type { WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
@@ -331,5 +333,53 @@ export const handlers = [
       return HttpResponse.json({ detail: "Aircraft not found" }, { status: 404 });
     }
     return HttpResponse.json(aircraft);
+  }),
+
+  // Tools API
+  http.get("/api/tools", ({ request }) => {
+    const url = new URL(request.url);
+    const cityId = url.searchParams.get("city_id");
+    const toolRoomId = url.searchParams.get("tool_room_id");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const pageSize = parseInt(url.searchParams.get("page_size") || "25");
+
+    let filtered = mockTools.filter((t) => t.city.id === cityId);
+
+    if (toolRoomId) {
+      filtered = filtered.filter((t) => t.tool_room.id === toolRoomId);
+    }
+
+    const start = (page - 1) * pageSize;
+    const paged = filtered.slice(start, start + pageSize);
+
+    return HttpResponse.json({
+      items: paged,
+      total: filtered.length,
+      page,
+      page_size: pageSize,
+    });
+  }),
+
+  // Tool Rooms API
+  http.get("/api/tool-rooms", ({ request }) => {
+    const url = new URL(request.url);
+    const cityId = url.searchParams.get("city_id");
+    const activeOnly = url.searchParams.get("active_only") !== "false";
+
+    if (!cityId) {
+      return HttpResponse.json(
+        { detail: "city_id is required" },
+        { status: 422 }
+      );
+    }
+
+    let filtered = activeOnly
+      ? mockToolRooms.filter((tr) => tr.is_active)
+      : mockToolRooms;
+
+    return HttpResponse.json({
+      items: filtered,
+      total: filtered.length,
+    });
   }),
 ];
