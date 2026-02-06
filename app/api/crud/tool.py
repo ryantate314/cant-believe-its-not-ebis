@@ -102,3 +102,18 @@ async def get_tools(
     tools = result.scalars().all()
 
     return list(tools), total
+
+
+async def get_tool_by_uuid(db: AsyncSession, tool_uuid: UUID) -> Tool | None:
+    """Get a tool by its UUID with eager-loaded relationships."""
+    query = (
+        select(Tool)
+        .options(
+            selectinload(Tool.tool_room).selectinload(ToolRoom.city),
+            selectinload(Tool.parent_kit),
+            selectinload(Tool.kit_tools),
+        )
+        .where(Tool.uuid == tool_uuid)
+    )
+    result = await db.execute(query)
+    return result.scalar_one_or_none()

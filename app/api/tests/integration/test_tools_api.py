@@ -3,12 +3,13 @@
 import pytest
 from uuid import uuid4
 from datetime import date, timedelta
+from decimal import Decimal
 
 from httpx import AsyncClient
 
 from models.city import City
 from models.tool_room import ToolRoom
-from models.tool import Tool, ToolType
+from models.tool import Tool, ToolType, ToolGroup
 
 
 class TestListTools:
@@ -417,3 +418,176 @@ class TestListTools:
         assert tools_by_name[test_tool_in_kit.name]["is_in_kit"] is True
         assert tools_by_name[test_tool_certified.name]["is_in_kit"] is False
         assert tools_by_name[test_tool_kit.name]["is_in_kit"] is False
+
+
+class TestGetTool:
+    """Tests for GET /api/v1/tools/{tool_id} endpoint."""
+
+    async def test_get_tool_by_id(
+        self,
+        client: AsyncClient,
+        test_tool_certified: Tool,
+    ):
+        """Test getting a tool by its UUID returns full detail response."""
+        response = await client.get(
+            f"/api/v1/tools/{test_tool_certified.uuid}"
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["id"] == str(test_tool_certified.uuid)
+        assert data["name"] == test_tool_certified.name
+        assert data["tool_type"] == "certified"
+        assert data["tool_type_code"] == "Cert"
+
+    async def test_get_tool_not_found(self, client: AsyncClient):
+        """Test that unknown UUID returns 404."""
+        fake_id = uuid4()
+        response = await client.get(f"/api/v1/tools/{fake_id}")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Tool not found"
+
+    async def test_get_tool_invalid_uuid(self, client: AsyncClient):
+        """Test that bad UUID format returns 422."""
+        response = await client.get("/api/v1/tools/not-a-uuid")
+        assert response.status_code == 422
+
+    async def test_get_tool_response_format(
+        self,
+        client: AsyncClient,
+        test_tool_certified: Tool,
+    ):
+        """Test that all expected detail fields are present."""
+        response = await client.get(
+            f"/api/v1/tools/{test_tool_certified.uuid}"
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        expected_fields = {
+            "id", "name", "tool_type", "tool_type_code", "description",
+            "details", "tool_group", "tool_room", "city", "make", "model",
+            "serial_number", "location", "location_notes", "tool_cost",
+            "purchase_date", "date_labeled", "vendor_name",
+            "calibration_days", "calibration_notes", "calibration_cost",
+            "last_calibration_date", "calibration_due_days",
+            "next_calibration_due", "media_count", "is_in_kit",
+            "parent_kit", "kit_tools", "created_by", "updated_by",
+            "created_at", "updated_at",
+        }
+        assert expected_fields.issubset(set(data.keys()))
+
+    async def test_get_certified_tool_detail(
+        self,
+        client: AsyncClient,
+        test_session,
+        test_tool_room: ToolRoom,
+    ):
+        """Test calibration fields populated for certified tools."""
+        tool = Tool(
+            uuid=uuid4(),
+            name="Calibrated Gauge",
+            tool_type=ToolType.CERTIFIED,
+            tool_group=ToolGroup.IN_SERVICE,
+            tool_room_id=test_tool_room.id,
+            description="Precision gauge",
+            details="Used for pressure testing",
+            location="Bay 3",
+            location_notes="Top shelf",
+            tool_cost=Decimal("1500.00"),
+            purchase_date=date(2024, 1, 15),
+            date_labeled=date(2024, 1, 20),
+            vendor_name="Precision Tools Inc.",
+            calibration_days=180,
+            calibration_notes="Annual calibration required",
+            calibration_cost=Decimal("250.00"),
+            last_calibration_date=date(2025, 6, 1),
+            next_calibration_due=date.today() + timedelta(days=30),
+            media_count=2,
+            created_by="admin",
+            updated_by="tech1",
+        )
+        test_session.add(tool)
+        await test_session.commit()
+        await test_session.refresh(tool)
+
+        response = await client.get(f"/api/v1/tools/{tool.uuid}")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["calibration_days"] == 180
+        assert data["calibration_notes"] == "Annual calibration required"
+        assert data["calibration_cost"] == "250.00"
+        assert data["last_calibration_date"] == "2025-06-01"
+        assert data["calibration_due_days"] == 30
+        assert data["next_calibration_due"] is not None
+        assert data["details"] == "Used for pressure testing"
+        assert data["tool_group"] == "in_service"
+        assert data["location"] == "Bay 3"
+        assert data["location_notes"] == "Top shelf"
+        assert data["tool_cost"] == "1500.00"
+        assert data["purchase_date"] == "2024-01-15"
+        assert data["date_labeled"] == "2024-01-20"
+        assert data["vendor_name"] == "Precision Tools Inc."
+        assert data["created_by"] == "admin"
+        assert data["updated_by"] == "tech1"
+
+    async def test_get_reference_tool_detail(
+        self,
+        client: AsyncClient,
+        test_tool_reference: Tool,
+    ):
+        """Test calibration fields null for non-certified tools."""
+        response = await client.get(
+            f"/api/v1/tools/{test_tool_reference.uuid}"
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["tool_type"] == "reference"
+        assert data["calibration_due_days"] is None
+        assert data["next_calibration_due"] is None
+        assert data["last_calibration_date"] is None
+        assert data["calibration_cost"] is None
+
+    async def test_get_kit_tool_includes_children(
+        self,
+        client: AsyncClient,
+        test_tool_kit: Tool,
+        test_tool_in_kit: Tool,
+    ):
+        """Test kit-type tool has kit_tools list with child tools."""
+        response = await client.get(
+            f"/api/v1/tools/{test_tool_kit.uuid}"
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["tool_type"] == "kit"
+        assert len(data["kit_tools"]) == 1
+        assert data["kit_tools"][0]["id"] == str(test_tool_in_kit.uuid)
+        assert data["kit_tools"][0]["name"] == test_tool_in_kit.name
+        assert data["kit_tools"][0]["tool_type"] == "consumable"
+        assert data["kit_tools"][0]["tool_type_code"] == "Cons"
+        assert data["parent_kit"] is None
+
+    async def test_get_tool_in_kit_includes_parent(
+        self,
+        client: AsyncClient,
+        test_tool_kit: Tool,
+        test_tool_in_kit: Tool,
+    ):
+        """Test tool in kit has parent_kit populated."""
+        response = await client.get(
+            f"/api/v1/tools/{test_tool_in_kit.uuid}"
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["is_in_kit"] is True
+        assert data["parent_kit"] is not None
+        assert data["parent_kit"]["id"] == str(test_tool_kit.uuid)
+        assert data["parent_kit"]["name"] == test_tool_kit.name
+        assert data["parent_kit"]["tool_type"] == "kit"
+        assert data["parent_kit"]["tool_type_code"] == "Kit"
+        assert data["kit_tools"] == []

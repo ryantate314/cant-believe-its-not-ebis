@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import Literal
@@ -9,12 +9,15 @@ from core.sorting import SortOrder
 from schemas.city import CityBrief
 from schemas.tool import (
     ToolResponse,
+    ToolDetailResponse,
+    ToolBrief,
     ToolListResponse,
     ToolRoomBrief,
     KitFilter,
     ToolType,
+    ToolGroup,
 )
-from crud.tool import get_tools
+from crud.tool import get_tools, get_tool_by_uuid
 from models.tool import ToolType as ModelToolType
 
 router = APIRouter(prefix="/tools", tags=["tools"])
@@ -63,6 +66,75 @@ def tool_to_response(tool) -> ToolResponse:
     )
 
 
+def tool_to_detail_response(tool) -> ToolDetailResponse:
+    """Convert a Tool model to a detail response schema."""
+    calibration_due_days = None
+    if tool.tool_type == ModelToolType.CERTIFIED and tool.next_calibration_due:
+        calibration_due_days = (tool.next_calibration_due - date.today()).days
+
+    parent_kit = None
+    if tool.parent_kit:
+        parent_kit = ToolBrief(
+            id=tool.parent_kit.uuid,
+            name=tool.parent_kit.name,
+            tool_type=ToolType(tool.parent_kit.tool_type.value),
+            tool_type_code=TOOL_TYPE_CODES[tool.parent_kit.tool_type],
+        )
+
+    kit_tools = [
+        ToolBrief(
+            id=kt.uuid,
+            name=kt.name,
+            tool_type=ToolType(kt.tool_type.value),
+            tool_type_code=TOOL_TYPE_CODES[kt.tool_type],
+        )
+        for kt in (tool.kit_tools or [])
+    ]
+
+    return ToolDetailResponse(
+        id=tool.uuid,
+        name=tool.name,
+        tool_type=ToolType(tool.tool_type.value),
+        tool_type_code=TOOL_TYPE_CODES[tool.tool_type],
+        description=tool.description,
+        details=tool.details,
+        tool_group=ToolGroup(tool.tool_group.value),
+        tool_room=ToolRoomBrief(
+            id=tool.tool_room.uuid,
+            code=tool.tool_room.code,
+            name=tool.tool_room.name,
+        ),
+        city=CityBrief(
+            id=tool.tool_room.city.uuid,
+            code=tool.tool_room.city.code,
+            name=tool.tool_room.city.name,
+        ),
+        make=tool.make,
+        model=tool.model,
+        serial_number=tool.serial_number,
+        location=tool.location,
+        location_notes=tool.location_notes,
+        tool_cost=tool.tool_cost,
+        purchase_date=tool.purchase_date,
+        date_labeled=tool.date_labeled,
+        vendor_name=tool.vendor_name,
+        calibration_days=tool.calibration_days,
+        calibration_notes=tool.calibration_notes,
+        calibration_cost=tool.calibration_cost,
+        last_calibration_date=tool.last_calibration_date,
+        calibration_due_days=calibration_due_days,
+        next_calibration_due=tool.next_calibration_due,
+        media_count=tool.media_count,
+        is_in_kit=tool.parent_kit_id is not None,
+        parent_kit=parent_kit,
+        kit_tools=kit_tools,
+        created_by=tool.created_by,
+        updated_by=tool.updated_by,
+        created_at=tool.created_at,
+        updated_at=tool.updated_at,
+    )
+
+
 @router.get("", response_model=ToolListResponse)
 async def list_tools(
     city_id: UUID = Query(..., description="City UUID (required)"),
@@ -106,3 +178,15 @@ async def list_tools(
         page=page,
         page_size=page_size,
     )
+
+
+@router.get("/{tool_id}", response_model=ToolDetailResponse)
+async def get_tool(
+    tool_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a tool by ID."""
+    tool = await get_tool_by_uuid(db, tool_id)
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    return tool_to_detail_response(tool)

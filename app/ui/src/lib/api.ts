@@ -32,6 +32,7 @@ import type {
 import type { WorkOrderCountsByCityResponse } from "@/types/dashboard";
 import type { SortOrder } from "@/types/sorting";
 import type {
+  ToolDetail,
   ToolListResponse,
   ToolRoomListResponse,
   KitFilter,
@@ -326,6 +327,8 @@ export const toolsApi = {
     if (params.sort_order) searchParams.set("sort_order", params.sort_order);
     return fetchApi(`/tools?${searchParams}`);
   },
+
+  get: (id: string): Promise<ToolDetail> => fetchApi(`/tools/${id}`),
 };
 
 // Tool Rooms API
