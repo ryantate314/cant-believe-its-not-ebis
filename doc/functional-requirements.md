@@ -3903,6 +3903,24 @@ The Tools module manages certified, reference, and consumable tools used in airc
 - KTYS
 - MSU
 
+**Toolbar Buttons:**
+| Button | Function |
+|--------|----------|
+| Add Tool | Quick create modal for new tool records |
+
+**Add Tool Modal:**
+| Field | Type | Description |
+|-------|------|-------------|
+| Tool Name | text (required) | Tool identifier/name |
+| Tool Type | dropdown (required) | Certified, Consumable, Kit, Reference Only |
+| Tool Room | lookup (required) | Assigned tool room location |
+| Description | text-limited | Tool description (255 char max) |
+
+**Actions:**
+- Add: Create tool and stay on list
+- Add and Goto: Create tool and navigate to detail view
+- Cancel: Close modal without creating
+
 ---
 
 #### 1.2 Left Sidebar Navigation
@@ -4153,6 +4171,7 @@ Tools can be transferred to:
 
 | Action | Description |
 |--------|-------------|
+| Add Tool | Create a new tool via quick-create modal |
 | View Tool List | Browse all tools by city and tool room |
 | Filter Tools | Use status and kit filters to find specific tools |
 | View Tool Detail | Double-click to open detailed tool information |
