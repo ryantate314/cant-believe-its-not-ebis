@@ -1,6 +1,7 @@
 import type { City, WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
 import type { Aircraft } from "@/types/aircraft";
+import type { Customer } from "@/types/customer";
 
 export const mockCities: City[] = [
   {
@@ -113,6 +114,66 @@ export const mockWorkOrders: WorkOrder[] = [
     customer_name: "Another Customer",
     status: "open",
     item_count: 0,
+  },
+];
+
+export const mockCustomers: Customer[] = [
+  {
+    id: "customer-uuid-1",
+    name: "Acme Corp",
+    email: "acme@example.com",
+    phone: "555-0100",
+    phone_type: "office",
+    address: "123 Main St",
+    address_2: "Suite 100",
+    city: "Springfield",
+    state: "IL",
+    zip: "62701",
+    country: "US",
+    notes: "Preferred customer",
+    is_active: true,
+    created_by: "test_user",
+    updated_by: null,
+    created_at: "2026-01-15T10:00:00Z",
+    updated_at: "2026-01-15T10:00:00Z",
+  },
+  {
+    id: "customer-uuid-2",
+    name: "Beta Aviation LLC",
+    email: "beta@example.com",
+    phone: "555-0200",
+    phone_type: "mobile",
+    address: "456 Oak Ave",
+    address_2: null,
+    city: "Nashville",
+    state: "TN",
+    zip: "37201",
+    country: "US",
+    notes: null,
+    is_active: true,
+    created_by: "test_user",
+    updated_by: null,
+    created_at: "2026-01-14T10:00:00Z",
+    updated_at: "2026-01-14T10:00:00Z",
+  },
+  {
+    id: "customer-uuid-3",
+    name: "Inactive Airways",
+    email: null,
+    phone: null,
+    phone_type: null,
+    address: null,
+    address_2: null,
+    city: null,
+    state: null,
+    zip: null,
+    country: null,
+    notes: null,
+    is_active: false,
+    created_by: "test_user",
+    updated_by: null,
+    created_at: "2026-01-10T10:00:00Z",
+    updated_at: "2026-01-10T10:00:00Z",
   },
 ];
 
