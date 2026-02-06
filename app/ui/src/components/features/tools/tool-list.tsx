@@ -354,7 +354,7 @@ export function ToolList() {
                     </TableHeader>
                     <TableBody>
                       {tools.map((tool) => (
-                        <TableRow key={tool.id}>
+                        <TableRow key={tool.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/tool/${tool.id}`)}>
                           <TableCell className="font-medium">
                             {tool.name}
                           </TableCell>

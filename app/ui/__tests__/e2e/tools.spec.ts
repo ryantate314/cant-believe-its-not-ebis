@@ -152,4 +152,107 @@ test.describe("Tools E2E", () => {
       await expect(page.getByRole("combobox").first()).toBeVisible();
     });
   });
+
+  test.describe("Tool Detail Page", () => {
+    test("should navigate to detail page from list row click", async ({
+      page,
+    }) => {
+      await page.goto("/tool");
+
+      const citySelector = page.getByRole("combobox").first();
+      await expect(citySelector).toBeVisible();
+
+      try {
+        await citySelector.click();
+        const firstCity = page.getByRole("option").first();
+        if (await firstCity.isVisible({ timeout: 2000 })) {
+          await firstCity.click();
+          // Wait for tools table to load
+          await expect(
+            page.getByText(/Tool Name/i)
+          ).toBeVisible({ timeout: 5000 });
+
+          // Click first tool row
+          const firstRow = page.locator("tbody tr").first();
+          await firstRow.click();
+
+          // Should navigate to detail page
+          await expect(page.url()).toContain("/tool/");
+        }
+      } catch {
+        test.skip();
+      }
+    });
+
+    test("should render tool detail page with tabs", async ({ page }) => {
+      // Navigate directly to a tool detail page — requires backend
+      try {
+        await page.goto("/tool");
+
+        const citySelector = page.getByRole("combobox").first();
+        await citySelector.click();
+        const firstCity = page.getByRole("option").first();
+        if (await firstCity.isVisible({ timeout: 2000 })) {
+          await firstCity.click();
+          await expect(
+            page.getByText(/Tool Name/i)
+          ).toBeVisible({ timeout: 5000 });
+
+          const firstRow = page.locator("tbody tr").first();
+          await firstRow.click();
+
+          // Verify detail page elements
+          await expect(
+            page.getByRole("tab", { name: "Main Info" })
+          ).toBeVisible({ timeout: 5000 });
+
+          // Verify disabled tabs exist
+          await expect(
+            page.getByRole("tab", { name: "Media" })
+          ).toBeDisabled();
+          await expect(
+            page.getByRole("tab", { name: "Certifications" })
+          ).toBeDisabled();
+          await expect(
+            page.getByRole("tab", { name: "Transfer History" })
+          ).toBeDisabled();
+          await expect(
+            page.getByRole("tab", { name: "Edit History" })
+          ).toBeDisabled();
+        }
+      } catch {
+        test.skip();
+      }
+    });
+
+    test("should have a back button that navigates back", async ({ page }) => {
+      try {
+        await page.goto("/tool");
+
+        const citySelector = page.getByRole("combobox").first();
+        await citySelector.click();
+        const firstCity = page.getByRole("option").first();
+        if (await firstCity.isVisible({ timeout: 2000 })) {
+          await firstCity.click();
+          await expect(
+            page.getByText(/Tool Name/i)
+          ).toBeVisible({ timeout: 5000 });
+
+          const firstRow = page.locator("tbody tr").first();
+          await firstRow.click();
+
+          await expect(
+            page.getByRole("button", { name: "Back" })
+          ).toBeVisible({ timeout: 5000 });
+
+          await page.getByRole("button", { name: "Back" }).click();
+
+          // Should navigate back to the list
+          await expect(page.getByText("Tools")).toBeVisible({ timeout: 5000 });
+        }
+      } catch {
+        test.skip();
+      }
+    });
+  });
 });

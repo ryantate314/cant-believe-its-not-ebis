@@ -6,6 +6,10 @@ import {
   mockWorkOrderItems,
   mockTools,
   mockToolRooms,
+  mockToolDetail,
+  mockToolDetailNonCertified,
+  mockToolDetailKit,
+  mockToolDetailInKit,
 } from "./data";
 import type { WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
@@ -335,7 +339,21 @@ export const handlers = [
     return HttpResponse.json(aircraft);
   }),
 
-  // Tools API
+  // Tools API - detail must come before list
+  http.get("/api/tools/:id", ({ params }) => {
+    const toolDetails: Record<string, typeof mockToolDetail> = {
+      "tool-uuid-1": mockToolDetail,
+      "tool-uuid-2": mockToolDetailNonCertified,
+      "tool-uuid-kit": mockToolDetailKit,
+      "tool-uuid-in-kit": mockToolDetailInKit,
+    };
+    const detail = toolDetails[params.id as string];
+    if (!detail) {
+      return HttpResponse.json({ detail: "Tool not found" }, { status: 404 });
+    }
+    return HttpResponse.json(detail);
+  }),
+
   http.get("/api/tools", ({ request }) => {
     const url = new URL(request.url);
     const cityId = url.searchParams.get("city_id");

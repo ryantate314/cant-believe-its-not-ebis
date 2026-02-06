@@ -1,7 +1,7 @@
 import type { City, WorkOrder, AircraftBrief } from "@/types/work-order";
 import type { WorkOrderItem } from "@/types/work-order-item";
 import type { Aircraft } from "@/types/aircraft";
-import type { Tool, ToolRoom } from "@/types/tool";
+import type { Tool, ToolDetail, ToolRoom } from "@/types/tool";
 
 export const mockCities: City[] = [
   {
@@ -210,3 +210,97 @@ export const mockTools: Tool[] = [
     updated_at: "2026-01-15T10:00:00Z",
   },
 ];
+
+export const mockToolDetail: ToolDetail = {
+  id: "tool-uuid-1",
+  name: "Torque Wrench 50ft-lb",
+  tool_type: "certified",
+  tool_type_code: "Cert",
+  description: "Calibrated torque wrench",
+  details: "Used for engine mount bolts",
+  tool_group: "in_service",
+  tool_room: { id: "tr-uuid-1", code: "TR-001", name: "Main Tool Room" },
+  city: { id: "city-uuid-1", code: "KTYS", name: "Knoxville McGhee Tyson" },
+  make: "Snap-On",
+  model: "TW-50",
+  serial_number: "SN-001",
+  location: "Cabinet A-3",
+  location_notes: "Top shelf, left side",
+  tool_cost: 249.99,
+  purchase_date: "2025-06-15",
+  date_labeled: "2025-06-20",
+  vendor_name: "Snap-On Tools Inc",
+  calibration_days: 365,
+  calibration_notes: "Annual calibration required",
+  calibration_cost: 75.0,
+  last_calibration_date: "2025-12-01",
+  calibration_due_days: 45,
+  next_calibration_due: "2026-03-22",
+  media_count: 0,
+  is_in_kit: false,
+  parent_kit: null,
+  kit_tools: [],
+  created_by: "admin_user",
+  updated_by: "tech_user",
+  created_at: "2025-06-15T10:00:00Z",
+  updated_at: "2026-01-20T14:30:00Z",
+};
+
+export const mockToolDetailNonCertified: ToolDetail = {
+  ...mockToolDetail,
+  id: "tool-uuid-2",
+  name: "Digital Multimeter",
+  tool_type: "reference",
+  tool_type_code: "Ref",
+  description: "Standard reference meter",
+  details: null,
+  make: "Fluke",
+  model: "87V",
+  serial_number: "SN-002",
+  location: null,
+  location_notes: null,
+  tool_cost: null,
+  purchase_date: null,
+  date_labeled: null,
+  vendor_name: null,
+  calibration_days: null,
+  calibration_notes: null,
+  calibration_cost: null,
+  last_calibration_date: null,
+  calibration_due_days: null,
+  next_calibration_due: null,
+  media_count: 1,
+  created_by: "admin_user",
+  updated_by: null,
+};
+
+export const mockToolDetailKit: ToolDetail = {
+  ...mockToolDetail,
+  id: "tool-uuid-kit",
+  name: "Engine Tool Kit",
+  tool_type: "kit",
+  tool_type_code: "Kit",
+  description: "Complete engine service kit",
+  details: null,
+  is_in_kit: false,
+  parent_kit: null,
+  kit_tools: [
+    { id: "tool-uuid-1", name: "Torque Wrench 50ft-lb", tool_type: "certified", tool_type_code: "Cert" },
+    { id: "tool-uuid-2", name: "Digital Multimeter", tool_type: "reference", tool_type_code: "Ref" },
+  ],
+  calibration_days: null,
+  calibration_notes: null,
+  calibration_cost: null,
+  last_calibration_date: null,
+  calibration_due_days: null,
+  next_calibration_due: null,
+};
+
+export const mockToolDetailInKit: ToolDetail = {
+  ...mockToolDetail,
+  id: "tool-uuid-in-kit",
+  name: "Kit Torque Wrench",
+  is_in_kit: true,
+  parent_kit: { id: "tool-uuid-kit", name: "Engine Tool Kit", tool_type: "kit", tool_type_code: "Kit" },
+  kit_tools: [],
+};
