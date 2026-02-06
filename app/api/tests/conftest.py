@@ -19,7 +19,7 @@ from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
 from models.labor_kit import LaborKit
 from models.labor_kit_item import LaborKitItem
 from models.tool_room import ToolRoom
-from models.tool import Tool, ToolType
+from models.tool import Tool, ToolType, ToolGroup
 
 
 # Use in-memory SQLite for tests
@@ -323,3 +323,98 @@ async def test_tool_room_inactive(
     await test_session.commit()
     await test_session.refresh(tool_room)
     return tool_room
+
+
+@pytest.fixture
+async def test_tool_certified(
+    test_session: AsyncSession, test_tool_room: ToolRoom
+) -> Tool:
+    """Create a certified tool with calibration due date."""
+    from datetime import date, timedelta
+
+    tool = Tool(
+        uuid=uuid4(),
+        name="Torque Wrench 50ft-lb",
+        tool_type=ToolType.CERTIFIED,
+        tool_group=ToolGroup.IN_SERVICE,
+        tool_room_id=test_tool_room.id,
+        description="Calibrated torque wrench",
+        make="Snap-On",
+        model="TW-50",
+        serial_number="SN-CERT-001",
+        next_calibration_due=date.today() + timedelta(days=45),
+        calibration_days=365,
+        media_count=0,
+        created_by="test_user",
+    )
+    test_session.add(tool)
+    await test_session.commit()
+    await test_session.refresh(tool)
+    return tool
+
+
+@pytest.fixture
+async def test_tool_reference(
+    test_session: AsyncSession, test_tool_room: ToolRoom
+) -> Tool:
+    """Create a reference tool (no calibration)."""
+    tool = Tool(
+        uuid=uuid4(),
+        name="Digital Multimeter",
+        tool_type=ToolType.REFERENCE,
+        tool_group=ToolGroup.IN_SERVICE,
+        tool_room_id=test_tool_room.id,
+        description="Standard reference meter",
+        make="Fluke",
+        model="87V",
+        serial_number="SN-REF-001",
+        media_count=1,
+        created_by="test_user",
+    )
+    test_session.add(tool)
+    await test_session.commit()
+    await test_session.refresh(tool)
+    return tool
+
+
+@pytest.fixture
+async def test_tool_kit(
+    test_session: AsyncSession, test_tool_room: ToolRoom
+) -> Tool:
+    """Create a kit-type tool (parent kit)."""
+    tool = Tool(
+        uuid=uuid4(),
+        name="Avionics Tool Kit",
+        tool_type=ToolType.KIT,
+        tool_group=ToolGroup.IN_SERVICE,
+        tool_room_id=test_tool_room.id,
+        description="Kit containing avionics tools",
+        media_count=0,
+        created_by="test_user",
+    )
+    test_session.add(tool)
+    await test_session.commit()
+    await test_session.refresh(tool)
+    return tool
+
+
+@pytest.fixture
+async def test_tool_in_kit(
+    test_session: AsyncSession, test_tool_room: ToolRoom, test_tool_kit: Tool
+) -> Tool:
+    """Create a tool that belongs to a kit."""
+    tool = Tool(
+        uuid=uuid4(),
+        name="Wire Stripper",
+        tool_type=ToolType.CONSUMABLE,
+        tool_group=ToolGroup.IN_SERVICE,
+        tool_room_id=test_tool_room.id,
+        description="Wire stripping tool",
+        parent_kit_id=test_tool_kit.id,
+        media_count=0,
+        created_by="test_user",
+    )
+    test_session.add(tool)
+    await test_session.commit()
+    await test_session.refresh(tool)
+    return tool
