@@ -78,3 +78,26 @@ class CustomerListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class CustomerBrief(BaseModel):
+    """Brief customer info for aircraft/work order responses."""
+
+    id: UUID
+    name: str
+    email: str | None
+
+    class Config:
+        from_attributes = True
+
+
+class AircraftCustomerResponse(BaseModel):
+    """Customer linked to an aircraft with primary flag."""
+
+    id: UUID
+    name: str
+    email: str | None
+    is_primary: bool
+
+    class Config:
+        from_attributes = True

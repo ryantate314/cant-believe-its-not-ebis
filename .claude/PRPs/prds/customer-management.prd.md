@@ -138,7 +138,7 @@ The codebase has well-established patterns for CRUD entities (aircraft, work ord
 | # | Phase | Description | Status | Parallel | Depends | PRP Plan |
 |---|-------|-------------|--------|----------|---------|----------|
 | 1 | Database & API - Customer CRUD | Customer table migration, SQLAlchemy model, Pydantic schemas, FastAPI CRUD endpoints with tests | complete | - | - | [customer-crud-api.plan.md](../plans/completed/customer-crud-api.plan.md) |
-| 2 | Database & API - Relationships | Aircraft-customer join table, relationship endpoints, work order auto-link on creation, tests | pending | - | 1 | - |
+| 2 | Database & API - Relationships | Aircraft-customer join table, relationship endpoints, work order auto-link on creation, tests | complete | - | 1 | [customer-relationships-api.plan.md](../plans/completed/customer-relationships-api.plan.md) |
 | 3 | Frontend - Customer List & Detail | Customer list page, detail/edit page, API client, Next.js proxy routes, frontend tests | pending | - | 1 | - |
 | 4 | Frontend - Relationship UI | Aircraft-customer linking UI, customer display on work orders, frontend tests | pending | - | 2, 3 | - |
 

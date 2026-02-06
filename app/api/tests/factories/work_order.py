@@ -22,10 +22,7 @@ class WorkOrderFactory(factory.Factory):
     work_order_type = WorkOrderType.WORK_ORDER
     status = WorkOrderStatus.CREATED
     status_notes = None
-
-    # Customer
-    customer_name = factory.Sequence(lambda n: f"Customer {n}")
-    customer_po_number = factory.Sequence(lambda n: f"PO-{n:03d}")
+    customer_id = None
 
     # Dates
     due_date = factory.LazyFunction(lambda: date.today())

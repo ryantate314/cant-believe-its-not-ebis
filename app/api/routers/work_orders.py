@@ -13,6 +13,7 @@ from schemas.work_order import (
     CityBrief,
     AircraftBrief,
 )
+from schemas.customer import CustomerBrief
 from crud.work_order import (
     get_work_orders,
     get_work_order_by_uuid,
@@ -46,8 +47,11 @@ def work_order_to_response(wo) -> WorkOrderResponse:
         work_order_type=wo.work_order_type,
         status=wo.status,
         status_notes=wo.status_notes,
-        customer_name=wo.customer_name,
-        customer_po_number=wo.customer_po_number,
+        customer=CustomerBrief(
+            id=wo.customer.uuid,
+            name=wo.customer.name,
+            email=wo.customer.email,
+        ) if wo.customer else None,
         due_date=wo.due_date,
         created_date=wo.created_date,
         completed_date=wo.completed_date,
@@ -70,7 +74,7 @@ async def list_work_orders(
     search: str | None = None,
     status: str | None = None,
     sort_by: Literal[
-        "work_order_number", "customer_name", "status", "priority", "created_at"
+        "work_order_number", "status", "priority", "created_at"
     ] | None = Query(None, description="Column to sort by"),
     sort_order: SortOrder = Query(SortOrder.DESC, description="Sort direction"),
     db: AsyncSession = Depends(get_db),

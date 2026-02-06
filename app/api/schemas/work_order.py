@@ -4,6 +4,8 @@ from datetime import datetime, date
 from decimal import Decimal
 from enum import Enum
 
+from schemas.customer import CustomerBrief
+
 
 class WorkOrderStatus(str, Enum):
     CREATED = "created"
@@ -36,10 +38,6 @@ class WorkOrderBase(BaseModel):
     status: WorkOrderStatus = WorkOrderStatus.CREATED
     status_notes: str | None = None
 
-    # Customer
-    customer_name: str | None = None
-    customer_po_number: str | None = None
-
     # Dates
     due_date: date | None = None
 
@@ -66,10 +64,6 @@ class WorkOrderUpdate(BaseModel):
 
     # Aircraft
     aircraft_id: UUID | None = None
-
-    # Customer
-    customer_name: str | None = None
-    customer_po_number: str | None = None
 
     # Dates
     due_date: date | None = None
@@ -120,8 +114,7 @@ class WorkOrderResponse(BaseModel):
     status_notes: str | None
 
     # Customer
-    customer_name: str | None
-    customer_po_number: str | None
+    customer: CustomerBrief | None = None
 
     # Dates
     due_date: date | None

@@ -19,6 +19,7 @@ from models.work_order_item import WorkOrderItem, WorkOrderItemStatus
 from models.labor_kit import LaborKit
 from models.labor_kit_item import LaborKitItem
 from models.customer import Customer
+from models.aircraft_customer import AircraftCustomer
 
 
 # Use in-memory SQLite for tests
@@ -141,8 +142,6 @@ async def test_work_order(
         aircraft_id=test_aircraft.id,
         work_order_type=WorkOrderType.WORK_ORDER,
         status=WorkOrderStatus.CREATED,
-        customer_name="Test Customer",
-        customer_po_number="PO-001",
         priority=PriorityLevel.NORMAL,
         created_by="test_user",
     )
@@ -328,3 +327,20 @@ async def test_customer_inactive(test_session: AsyncSession) -> Customer:
     await test_session.commit()
     await test_session.refresh(customer)
     return customer
+
+
+@pytest.fixture
+async def test_aircraft_customer_link(
+    test_session: AsyncSession, test_aircraft: Aircraft, test_customer: Customer
+) -> AircraftCustomer:
+    """Link test customer to test aircraft as primary."""
+    link = AircraftCustomer(
+        aircraft_id=test_aircraft.id,
+        customer_id=test_customer.id,
+        is_primary=True,
+        created_by="test_user",
+    )
+    test_session.add(link)
+    await test_session.commit()
+    await test_session.refresh(link)
+    return link

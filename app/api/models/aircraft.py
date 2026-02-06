@@ -21,7 +21,6 @@ class Aircraft(Base):
     year_built: Mapped[int | None] = mapped_column(Integer)
     meter_profile: Mapped[str | None] = mapped_column(Text)
     primary_city_id: Mapped[int | None] = mapped_column(ForeignKey("city.id"))
-    customer_name: Mapped[str | None] = mapped_column(String(200))
     aircraft_class: Mapped[str | None] = mapped_column(String(50))
     fuel_code: Mapped[str | None] = mapped_column(String(20))
     notes: Mapped[str | None] = mapped_column(Text)

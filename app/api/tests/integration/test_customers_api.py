@@ -5,6 +5,8 @@ from uuid import uuid4
 from httpx import AsyncClient
 
 from models.customer import Customer
+from models.aircraft import Aircraft
+from models.aircraft_customer import AircraftCustomer
 
 
 class TestListCustomers:
@@ -298,3 +300,15 @@ class TestDeleteCustomer:
         response = await client.delete(f"/api/v1/customers/{fake_id}")
         assert response.status_code == 404
         assert response.json()["detail"] == "Customer not found"
+
+    async def test_delete_customer_with_linked_aircraft(
+        self,
+        client: AsyncClient,
+        test_customer: Customer,
+        test_aircraft: Aircraft,
+        test_aircraft_customer_link: AircraftCustomer,
+    ):
+        """Test that deleting a customer with linked aircraft returns 400."""
+        response = await client.delete(f"/api/v1/customers/{test_customer.uuid}")
+        assert response.status_code == 400
+        assert "linked to" in response.json()["detail"]

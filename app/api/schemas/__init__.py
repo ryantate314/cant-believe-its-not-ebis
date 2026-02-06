@@ -39,6 +39,8 @@ from schemas.customer import (
     CustomerUpdate,
     CustomerResponse,
     CustomerListResponse,
+    CustomerBrief,
+    AircraftCustomerResponse,
 )
 
 __all__ = [
@@ -73,4 +75,6 @@ __all__ = [
     "CustomerUpdate",
     "CustomerResponse",
     "CustomerListResponse",
+    "CustomerBrief",
+    "AircraftCustomerResponse",
 ]

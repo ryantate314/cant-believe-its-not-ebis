@@ -13,7 +13,6 @@ from core.sorting import SortOrder
 # Allowed columns for sorting work orders
 WORK_ORDER_SORT_COLUMNS = {
     "work_order_number": WorkOrder.work_order_number,
-    "customer_name": WorkOrder.customer_name,
     "status": WorkOrder.status,
     "priority": WorkOrder.priority,
     "created_at": WorkOrder.created_at,
@@ -61,6 +60,7 @@ async def get_work_orders(
         .options(
             selectinload(WorkOrder.city),
             selectinload(WorkOrder.aircraft),
+            selectinload(WorkOrder.customer),
             selectinload(WorkOrder.items),
         )
         .where(WorkOrder.city_id == city.id)
@@ -71,7 +71,6 @@ async def get_work_orders(
         search_filter = f"%{search}%"
         query = query.join(Aircraft).where(
             WorkOrder.work_order_number.ilike(search_filter)
-            | WorkOrder.customer_name.ilike(search_filter)
             | Aircraft.registration_number.ilike(search_filter)
         )
 
@@ -84,7 +83,6 @@ async def get_work_orders(
         search_filter = f"%{search}%"
         count_query = count_query.join(Aircraft).where(
             WorkOrder.work_order_number.ilike(search_filter)
-            | WorkOrder.customer_name.ilike(search_filter)
             | Aircraft.registration_number.ilike(search_filter)
         )
     if status:
@@ -116,6 +114,7 @@ async def get_work_order_by_uuid(db: AsyncSession, wo_uuid: UUID) -> WorkOrder |
         .options(
             selectinload(WorkOrder.city),
             selectinload(WorkOrder.aircraft),
+            selectinload(WorkOrder.customer),
             selectinload(WorkOrder.items),
         )
         .where(WorkOrder.uuid == wo_uuid)
@@ -148,17 +147,21 @@ async def create_work_order(
     # Generate work order number
     wo_number = generate_work_order_number(city.code, sequence)
 
+    # Auto-link primary customer from aircraft
+    from crud.customer import get_aircraft_primary_customer
+
+    primary_customer = await get_aircraft_primary_customer(db, aircraft.id)
+
     # Create work order
     work_order = WorkOrder(
         work_order_number=wo_number,
         sequence_number=sequence,
         city_id=city.id,
         aircraft_id=aircraft.id,
+        customer_id=primary_customer.id if primary_customer else None,
         work_order_type=work_order_in.work_order_type,
         status=work_order_in.status,
         status_notes=work_order_in.status_notes,
-        customer_name=work_order_in.customer_name,
-        customer_po_number=work_order_in.customer_po_number,
         due_date=work_order_in.due_date,
         lead_technician=work_order_in.lead_technician,
         sales_person=work_order_in.sales_person,
@@ -168,7 +171,7 @@ async def create_work_order(
 
     db.add(work_order)
     await db.flush()
-    await db.refresh(work_order, ["city", "aircraft", "items"])
+    await db.refresh(work_order, ["city", "aircraft", "customer", "items"])
     return work_order
 
 
@@ -199,7 +202,7 @@ async def update_work_order(
 
     work_order.updated_at = datetime.utcnow()
     await db.flush()
-    await db.refresh(work_order, ["city", "aircraft", "items"])
+    await db.refresh(work_order, ["city", "aircraft", "customer", "items"])
     return work_order
 
 

@@ -1,5 +1,5 @@
 from sqlalchemy import String, Boolean, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -35,3 +35,6 @@ class Customer(Base):
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow
     )
+
+    # Relationships
+    work_orders: Mapped[list["WorkOrder"]] = relationship("WorkOrder", back_populates="customer")

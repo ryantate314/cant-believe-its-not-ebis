@@ -57,6 +57,7 @@ class WorkOrder(Base):
     sequence_number: Mapped[int] = mapped_column(Integer)
     city_id: Mapped[int] = mapped_column(ForeignKey("city.id"))
     aircraft_id: Mapped[int] = mapped_column(ForeignKey("aircraft.id"))
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customer.id"), nullable=True)
     work_order_type: Mapped[WorkOrderType] = mapped_column(
         Enum(
             WorkOrderType,
@@ -76,10 +77,6 @@ class WorkOrder(Base):
         default=WorkOrderStatus.CREATED,
     )
     status_notes: Mapped[str | None] = mapped_column(String(255))
-
-    # Customer (denormalized for POC)
-    customer_name: Mapped[str | None] = mapped_column(String(200))
-    customer_po_number: Mapped[str | None] = mapped_column(String(50))
 
     # Dates
     due_date: Mapped[date | None] = mapped_column(Date)
@@ -110,6 +107,7 @@ class WorkOrder(Base):
     # Relationships
     city: Mapped["City"] = relationship("City", back_populates="work_orders")
     aircraft: Mapped["Aircraft"] = relationship("Aircraft", back_populates="work_orders")
+    customer: Mapped["Customer | None"] = relationship("Customer", back_populates="work_orders")
     items: Mapped[list["WorkOrderItem"]] = relationship(
         "WorkOrderItem", back_populates="work_order", cascade="all, delete-orphan"
     )

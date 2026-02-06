@@ -17,7 +17,12 @@ from crud.customer import (
     create_customer,
     update_customer,
     delete_customer,
+    get_customer_aircraft,
+    link_customer_to_aircraft,
+    unlink_customer_from_aircraft,
+    set_primary_customer,
 )
+from schemas.customer import AircraftCustomerResponse
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 
@@ -128,3 +133,74 @@ async def delete_existing_customer(
             raise HTTPException(status_code=404, detail="Customer not found")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- Aircraft relationship endpoints ---
+
+
+@router.get("/{customer_id}/aircraft")
+async def list_customer_aircraft(
+    customer_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """List aircraft linked to a customer."""
+    customer = await get_customer_by_uuid(db, customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    aircraft_list = await get_customer_aircraft(db, customer_id)
+    return [
+        {
+            "id": str(aircraft.uuid),
+            "registration_number": aircraft.registration_number,
+            "serial_number": aircraft.serial_number,
+            "make": aircraft.make,
+            "model": aircraft.model,
+            "year_built": aircraft.year_built,
+            "is_primary": is_primary,
+        }
+        for aircraft, is_primary in aircraft_list
+    ]
+
+
+@router.post("/{customer_id}/aircraft/{aircraft_id}", status_code=201)
+async def link_aircraft(
+    customer_id: UUID,
+    aircraft_id: UUID,
+    created_by: str = Query(..., description="User performing the action"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Link a customer to an aircraft."""
+    try:
+        link = await link_customer_to_aircraft(db, customer_id, aircraft_id, created_by)
+        return {"is_primary": link.is_primary}
+    except ValueError as e:
+        detail = str(e)
+        if "not found" in detail.lower():
+            raise HTTPException(status_code=404, detail=detail)
+        raise HTTPException(status_code=400, detail=detail)
+
+
+@router.delete("/{customer_id}/aircraft/{aircraft_id}", status_code=204)
+async def unlink_aircraft(
+    customer_id: UUID,
+    aircraft_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Unlink a customer from an aircraft."""
+    unlinked = await unlink_customer_from_aircraft(db, customer_id, aircraft_id)
+    if not unlinked:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+
+@router.put("/{customer_id}/aircraft/{aircraft_id}/primary", status_code=200)
+async def set_primary(
+    customer_id: UUID,
+    aircraft_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Set this customer as the primary for the aircraft."""
+    result = await set_primary_customer(db, customer_id, aircraft_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Link not found")
+    return {"status": "ok"}
