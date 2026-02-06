@@ -184,6 +184,7 @@ export function ToolDetail({ toolId }: ToolDetailProps) {
                   </dt>
                   <dd className="mt-1">{tool.serial_number || "-"}</dd>
                 </div>
+                {/* TODO: Convert Vendor to a lookup field (vendor entity with search) */}
                 <div>
                   <dt className="text-sm font-medium text-muted-foreground">
                     Vendor
