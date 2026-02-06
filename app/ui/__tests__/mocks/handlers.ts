@@ -373,9 +373,10 @@ export const handlers = [
       );
     }
 
-    let filtered = activeOnly
-      ? mockToolRooms.filter((tr) => tr.is_active)
-      : mockToolRooms;
+    let filtered = mockToolRooms.filter((tr) => tr.city_id === cityId);
+    if (activeOnly) {
+      filtered = filtered.filter((tr) => tr.is_active);
+    }
 
     return HttpResponse.json({
       items: filtered,

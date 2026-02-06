@@ -3,6 +3,8 @@ from uuid import UUID
 from datetime import datetime, date
 from enum import Enum
 
+from schemas.city import CityBrief
+
 
 class ToolType(str, Enum):
     CERTIFIED = "certified"
@@ -25,15 +27,6 @@ class KitFilter(str, Enum):
 
 # Brief schemas for nested responses
 class ToolRoomBrief(BaseModel):
-    id: UUID
-    code: str
-    name: str
-
-    class Config:
-        from_attributes = True
-
-
-class CityBrief(BaseModel):
     id: UUID
     code: str
     name: str

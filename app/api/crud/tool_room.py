@@ -21,8 +21,8 @@ async def get_tool_rooms_by_city(
     count_query = select(func.count(ToolRoom.id)).where(ToolRoom.city_id == city.id)
 
     if active_only:
-        query = query.where(ToolRoom.is_active == True)
-        count_query = count_query.where(ToolRoom.is_active == True)
+        query = query.where(ToolRoom.is_active.is_(True))
+        count_query = count_query.where(ToolRoom.is_active.is_(True))
 
     query = query.order_by(ToolRoom.name)
 

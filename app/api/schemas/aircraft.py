@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
 
+from schemas.city import CityBrief
+
 
 class AircraftBase(BaseModel):
     """Base schema for aircraft fields."""
@@ -42,17 +44,6 @@ class AircraftUpdate(BaseModel):
     notes: str | None = None
     is_active: bool | None = None
     updated_by: str | None = None
-
-
-class CityBrief(BaseModel):
-    """Brief city info for aircraft response."""
-
-    id: UUID
-    code: str
-    name: str
-
-    class Config:
-        from_attributes = True
 
 
 class AircraftResponse(BaseModel):

@@ -6,11 +6,11 @@ from datetime import date
 
 from core.database import get_db
 from core.sorting import SortOrder
+from schemas.city import CityBrief
 from schemas.tool import (
     ToolResponse,
     ToolListResponse,
     ToolRoomBrief,
-    CityBrief,
     KitFilter,
     ToolType,
 )

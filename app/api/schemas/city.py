@@ -15,6 +15,17 @@ class CityResponse(BaseModel):
         from_attributes = True
 
 
+class CityBrief(BaseModel):
+    """Brief city info for nested responses."""
+
+    id: UUID
+    code: str
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
 class CityListResponse(BaseModel):
     """Response schema for a list of cities."""
 

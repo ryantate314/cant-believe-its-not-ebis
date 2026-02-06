@@ -4,6 +4,8 @@ from datetime import datetime, date
 from decimal import Decimal
 from enum import Enum
 
+from schemas.city import CityBrief
+
 
 class WorkOrderStatus(str, Enum):
     CREATED = "created"
@@ -80,17 +82,6 @@ class WorkOrderUpdate(BaseModel):
     priority: PriorityLevel | None = None
 
     updated_by: str | None = None
-
-
-class CityBrief(BaseModel):
-    """Brief city info for work order response."""
-
-    id: UUID
-    code: str
-    name: str
-
-    class Config:
-        from_attributes = True
 
 
 class AircraftBrief(BaseModel):

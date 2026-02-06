@@ -155,18 +155,20 @@ export const mockWorkOrderItems: WorkOrderItem[] = [
   },
 ];
 
-export const mockToolRooms: ToolRoom[] = [
+export const mockToolRooms: (ToolRoom & { city_id: string })[] = [
   {
     id: "tr-uuid-1",
     code: "TR-001",
     name: "Main Tool Room",
     is_active: true,
+    city_id: "city-uuid-1",
   },
   {
     id: "tr-uuid-2",
     code: "TR-002",
     name: "Secondary Tool Room",
     is_active: true,
+    city_id: "city-uuid-1",
   },
 ];
 

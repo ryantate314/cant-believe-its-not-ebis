@@ -5,7 +5,7 @@ from uuid import uuid4
 from datetime import date, datetime
 from decimal import Decimal
 
-from schemas.city import CityResponse, CityListResponse
+from schemas.city import CityResponse, CityListResponse, CityBrief
 from schemas.work_order import (
     WorkOrderBase,
     WorkOrderCreate,
@@ -15,7 +15,6 @@ from schemas.work_order import (
     WorkOrderStatus,
     PriorityLevel,
     WorkOrderType,
-    CityBrief,
     AircraftBrief,
 )
 from schemas.work_order_item import (

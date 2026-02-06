@@ -5,12 +5,12 @@ from typing import Literal
 
 from core.database import get_db
 from core.sorting import SortOrder
+from schemas.city import CityBrief
 from schemas.work_order import (
     WorkOrderCreate,
     WorkOrderUpdate,
     WorkOrderResponse,
     WorkOrderListResponse,
-    CityBrief,
     AircraftBrief,
 )
 from crud.work_order import (
