@@ -591,3 +591,112 @@ class TestGetTool:
         assert data["parent_kit"]["tool_type"] == "kit"
         assert data["parent_kit"]["tool_type_code"] == "Kit"
         assert data["kit_tools"] == []
+
+
+class TestCreateTool:
+    """Tests for POST /api/v1/tools endpoint."""
+
+    async def test_create_tool_success(
+        self,
+        client: AsyncClient,
+        test_tool_room: ToolRoom,
+    ):
+        """Test creating a tool with valid data returns 201 and detail response."""
+        payload = {
+            "name": "New Test Tool",
+            "tool_type": "certified",
+            "tool_room_id": str(test_tool_room.uuid),
+            "created_by": "test_user",
+        }
+        response = await client.post("/api/v1/tools", json=payload)
+        assert response.status_code == 201
+
+        data = response.json()
+        assert data["name"] == "New Test Tool"
+        assert data["tool_type"] == "certified"
+        assert data["tool_type_code"] == "Cert"
+        assert data["tool_room"]["id"] == str(test_tool_room.uuid)
+        assert data["tool_room"]["code"] == test_tool_room.code
+        assert data["id"] is not None
+        assert data["created_by"] == "test_user"
+
+    async def test_create_tool_missing_required_fields(
+        self,
+        client: AsyncClient,
+    ):
+        """Test that missing required fields returns 422."""
+        # Missing name, tool_type, tool_room_id, created_by
+        response = await client.post("/api/v1/tools", json={})
+        assert response.status_code == 422
+
+    async def test_create_tool_invalid_tool_room(
+        self,
+        client: AsyncClient,
+    ):
+        """Test that unknown tool_room UUID returns 400."""
+        payload = {
+            "name": "Bad Room Tool",
+            "tool_type": "reference",
+            "tool_room_id": str(uuid4()),
+            "created_by": "test_user",
+        }
+        response = await client.post("/api/v1/tools", json=payload)
+        assert response.status_code == 400
+        assert "Tool room not found" in response.json()["detail"]
+
+    async def test_create_tool_invalid_tool_type(
+        self,
+        client: AsyncClient,
+        test_tool_room: ToolRoom,
+    ):
+        """Test that invalid tool_type enum value returns 422."""
+        payload = {
+            "name": "Bad Type Tool",
+            "tool_type": "invalid_type",
+            "tool_room_id": str(test_tool_room.uuid),
+            "created_by": "test_user",
+        }
+        response = await client.post("/api/v1/tools", json=payload)
+        assert response.status_code == 422
+
+    async def test_create_tool_with_description(
+        self,
+        client: AsyncClient,
+        test_tool_room: ToolRoom,
+    ):
+        """Test that optional description field is persisted."""
+        payload = {
+            "name": "Described Tool",
+            "tool_type": "consumable",
+            "tool_room_id": str(test_tool_room.uuid),
+            "description": "A detailed description",
+            "created_by": "test_user",
+        }
+        response = await client.post("/api/v1/tools", json=payload)
+        assert response.status_code == 201
+
+        data = response.json()
+        assert data["description"] == "A detailed description"
+
+    async def test_create_tool_defaults(
+        self,
+        client: AsyncClient,
+        test_tool_room: ToolRoom,
+    ):
+        """Test that tool_group defaults to in_service and media_count to 0."""
+        payload = {
+            "name": "Default Tool",
+            "tool_type": "reference",
+            "tool_room_id": str(test_tool_room.uuid),
+            "created_by": "test_user",
+        }
+        response = await client.post("/api/v1/tools", json=payload)
+        assert response.status_code == 201
+
+        data = response.json()
+        assert data["tool_group"] == "in_service"
+        assert data["media_count"] == 0
+        assert data["is_in_kit"] is False
+        assert data["parent_kit"] is None
+        assert data["kit_tools"] == []
+        assert data["description"] is None

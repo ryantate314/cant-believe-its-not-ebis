@@ -107,6 +107,14 @@ class ToolDetailResponse(BaseModel):
         from_attributes = True
 
 
+class ToolCreate(BaseModel):
+    name: str
+    tool_type: ToolType
+    tool_room_id: UUID
+    description: str | None = None
+    created_by: str
+
+
 class ToolListResponse(BaseModel):
     items: list[ToolResponse]
     total: int

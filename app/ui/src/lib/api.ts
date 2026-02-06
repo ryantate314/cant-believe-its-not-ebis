@@ -35,6 +35,7 @@ import type {
   ToolDetail,
   ToolListResponse,
   ToolRoomListResponse,
+  ToolCreateInput,
   KitFilter,
   CalibDueDays,
 } from "@/types/tool";
@@ -329,6 +330,12 @@ export const toolsApi = {
   },
 
   get: (id: string): Promise<ToolDetail> => fetchApi(`/tools/${id}`),
+
+  create: (data: ToolCreateInput): Promise<ToolDetail> =>
+    fetchApi("/tools", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // Tool Rooms API

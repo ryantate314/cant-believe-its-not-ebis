@@ -10,6 +10,7 @@ from schemas.city import CityBrief
 from schemas.tool import (
     ToolResponse,
     ToolDetailResponse,
+    ToolCreate,
     ToolBrief,
     ToolListResponse,
     ToolRoomBrief,
@@ -17,7 +18,7 @@ from schemas.tool import (
     ToolType,
     ToolGroup,
 )
-from crud.tool import get_tools, get_tool_by_uuid
+from crud.tool import get_tools, get_tool_by_uuid, create_tool
 from models.tool import ToolType as ModelToolType
 
 router = APIRouter(prefix="/tools", tags=["tools"])
@@ -178,6 +179,19 @@ async def list_tools(
         page=page,
         page_size=page_size,
     )
+
+
+@router.post("", response_model=ToolDetailResponse, status_code=201)
+async def create_tool_endpoint(
+    tool_in: ToolCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new tool."""
+    try:
+        tool = await create_tool(db, tool_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return tool_to_detail_response(tool)
 
 
 @router.get("/{tool_id}", response_model=ToolDetailResponse)

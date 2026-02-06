@@ -339,6 +339,57 @@ export const handlers = [
     return HttpResponse.json(aircraft);
   }),
 
+  // Tools API - POST must come before GET with param
+  http.post("/api/tools", async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    const toolRoom = mockToolRooms.find((tr) => tr.id === body.tool_room_id);
+    const now = new Date().toISOString();
+    const toolTypeCodeMap: Record<string, string> = {
+      certified: "Cert",
+      reference: "Ref",
+      consumable: "Cons",
+      kit: "Kit",
+    };
+    const newToolDetail = {
+      ...mockToolDetail,
+      id: `tool-uuid-${Date.now()}`,
+      name: body.name as string,
+      tool_type: body.tool_type as string,
+      tool_type_code: toolTypeCodeMap[(body.tool_type as string)] || "Cert",
+      description: (body.description as string) || null,
+      details: null,
+      tool_group: "in_service",
+      tool_room: toolRoom
+        ? { id: toolRoom.id, code: toolRoom.code, name: toolRoom.name }
+        : mockToolDetail.tool_room,
+      city: mockToolDetail.city,
+      make: null,
+      model: null,
+      serial_number: null,
+      location: null,
+      location_notes: null,
+      tool_cost: null,
+      purchase_date: null,
+      date_labeled: null,
+      vendor_name: null,
+      calibration_days: null,
+      calibration_notes: null,
+      calibration_cost: null,
+      last_calibration_date: null,
+      calibration_due_days: null,
+      next_calibration_due: null,
+      media_count: 0,
+      is_in_kit: false,
+      parent_kit: null,
+      kit_tools: [],
+      created_by: body.created_by as string,
+      updated_by: null,
+      created_at: now,
+      updated_at: now,
+    };
+    return HttpResponse.json(newToolDetail, { status: 201 });
+  }),
+
   // Tools API - detail must come before list
   http.get("/api/tools/:id", ({ params }) => {
     const toolDetails: Record<string, typeof mockToolDetail> = {

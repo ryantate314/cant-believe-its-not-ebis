@@ -90,6 +90,14 @@ export interface ToolDetail {
   updated_at: string;
 }
 
+export interface ToolCreateInput {
+  name: string;
+  tool_type: ToolType;
+  tool_room_id: string;
+  description?: string;
+  created_by: string;
+}
+
 export interface ToolRoom {
   id: string;
   code: string;

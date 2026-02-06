@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ToolList } from "@/components/features/tools/tool-list";
 
 const mockSearchParams = new URLSearchParams();
@@ -174,6 +175,69 @@ describe("ToolList", () => {
       await waitFor(() => {
         expect(screen.getByText("No tools found")).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("add tool modal", () => {
+    it("should render Add Tool button", () => {
+      render(<ToolList />);
+
+      expect(
+        screen.getByRole("button", { name: "Add Tool" })
+      ).toBeInTheDocument();
+    });
+
+    it("should open Add Tool dialog when button is clicked", async () => {
+      const user = userEvent.setup();
+      render(<ToolList />);
+
+      await user.click(screen.getByRole("button", { name: "Add Tool" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Add Tool", { selector: "[class*='DialogTitle'], h2" })).toBeInTheDocument();
+      });
+    });
+
+    it("should show form fields in the dialog", async () => {
+      const user = userEvent.setup();
+      render(<ToolList />);
+
+      await user.click(screen.getByRole("button", { name: "Add Tool" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Tool Name *")).toBeInTheDocument();
+      });
+
+      expect(screen.getByText("Tool Type *")).toBeInTheDocument();
+      expect(screen.getByText("Tool Room *")).toBeInTheDocument();
+      expect(screen.getByLabelText("Description")).toBeInTheDocument();
+    });
+
+    it("should show Cancel, Add, and Add and Goto buttons in the dialog", async () => {
+      const user = userEvent.setup();
+      render(<ToolList />);
+
+      await user.click(screen.getByRole("button", { name: "Add Tool" }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Add and Goto" })).toBeInTheDocument();
+    });
+
+    it("should have Add and Add and Goto buttons disabled when form is empty", async () => {
+      const user = userEvent.setup();
+      render(<ToolList />);
+
+      await user.click(screen.getByRole("button", { name: "Add Tool" }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
+      });
+
+      expect(screen.getByRole("button", { name: "Add and Goto" })).toBeDisabled();
     });
   });
 });

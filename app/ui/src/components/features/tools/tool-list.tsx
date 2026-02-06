@@ -26,9 +26,19 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toolsApi, toolRoomsApi, citiesApi } from "@/lib/api";
 import { useSortParams } from "@/hooks/use-sort-params";
-import type { Tool, ToolRoom, KitFilter, CalibDueDays } from "@/types/tool";
+import type { Tool, ToolRoom, ToolType, KitFilter, CalibDueDays } from "@/types/tool";
 import type { City } from "@/types/work-order";
 
 const TOOL_TYPE_COLORS: Record<string, string> = {
@@ -70,6 +80,24 @@ export function ToolList() {
     fetchKey: "",
   });
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [refetchCounter, setRefetchCounter] = useState(0);
+  const [formData, setFormData] = useState({
+    name: "",
+    tool_type: "" as ToolType | "",
+    tool_room_id: "",
+    description: "",
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      tool_type: "",
+      tool_room_id: "",
+      description: "",
+    });
+  };
+
   const cityId = searchParams.get("city") || "";
   const toolRoomId = searchParams.get("tool_room") || "";
   const kitFilter = (searchParams.get("kit_filter") as KitFilter) || "";
@@ -82,7 +110,7 @@ export function ToolList() {
   });
 
   const currentFetchKey = cityId
-    ? `${cityId}-${toolRoomId}-${kitFilter}-${calibDue}-${page}-${pageSize}-${sortBy}-${sortOrder}`
+    ? `${cityId}-${toolRoomId}-${kitFilter}-${calibDue}-${page}-${pageSize}-${sortBy}-${sortOrder}-${refetchCounter}`
     : "";
 
   const loading = cityId ? fetchState.fetchKey !== currentFetchKey : false;
@@ -147,6 +175,28 @@ export function ToolList() {
     };
   }, [cityId, toolRoomId, kitFilter, calibDue, page, pageSize, sortBy, sortOrder, currentFetchKey]);
 
+  const handleAddTool = async (navigateToDetail: boolean) => {
+    if (!formData.name || !formData.tool_type || !formData.tool_room_id) return;
+    try {
+      const newTool = await toolsApi.create({
+        name: formData.name,
+        tool_type: formData.tool_type as ToolType,
+        tool_room_id: formData.tool_room_id,
+        description: formData.description || undefined,
+        created_by: "system",
+      });
+      setDialogOpen(false);
+      resetForm();
+      if (navigateToDetail) {
+        router.push(`/tool/${newTool.id}`);
+      } else {
+        setRefetchCounter((c) => c + 1);
+      }
+    } catch (error) {
+      console.error("Failed to create tool:", error);
+    }
+  };
+
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
@@ -172,6 +222,125 @@ export function ToolList() {
       <Tabs defaultValue="list">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Tools</h1>
+          <div className="flex items-center gap-3">
+            <Dialog
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) resetForm();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>Add Tool</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Add Tool</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-name">Tool Name *</Label>
+                    <Input
+                      id="tool-name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-type">Tool Type *</Label>
+                    <Select
+                      value={formData.tool_type}
+                      onValueChange={(v) =>
+                        setFormData((prev) => ({ ...prev, tool_type: v as ToolType }))
+                      }
+                    >
+                      <SelectTrigger id="tool-type">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="certified">Certified</SelectItem>
+                        <SelectItem value="consumable">Consumable</SelectItem>
+                        <SelectItem value="kit">Kit</SelectItem>
+                        <SelectItem value="reference">Reference Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-room">Tool Room *</Label>
+                    <Select
+                      value={formData.tool_room_id}
+                      onValueChange={(v) =>
+                        setFormData((prev) => ({ ...prev, tool_room_id: v }))
+                      }
+                      disabled={toolRooms.length === 0}
+                    >
+                      <SelectTrigger id="tool-room">
+                        <SelectValue
+                          placeholder={
+                            toolRooms.length === 0
+                              ? "Select a city first"
+                              : "Select tool room"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {toolRooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            {room.code} - {room.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-description">Description</Label>
+                    <Textarea
+                      id="tool-description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      maxLength={255}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={!formData.name || !formData.tool_type || !formData.tool_room_id}
+                      onClick={() => handleAddTool(false)}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={!formData.name || !formData.tool_type || !formData.tool_room_id}
+                      onClick={() => handleAddTool(true)}
+                    >
+                      Add and Goto
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           <TabsList>
             <TabsTrigger value="list">
               List
@@ -191,6 +360,7 @@ export function ToolList() {
               Reports
             </TabsTrigger>
           </TabsList>
+          </div>
         </div>
 
         <TabsContent value="list">
